@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Ronda &amp; Jimpitan Warga</string>
+    <string name="biometric_prompt_title">Autentikasi Sidik Jari</string>
+    <string name="biometric_prompt_subtitle">Masuk cepat ke sistem Ronda RT 01</string>
+    <string name="biometric_prompt_description">Sentuh sensor sidik jari perangkat Android Anda untuk melanjutkan.</string>
+    <string name="biometric_prompt_cancel">Batal / Gunakan PIN</string>
+</resources>

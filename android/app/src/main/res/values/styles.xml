@@ -1,0 +1,10 @@
+<resources>
+    <style name="Theme.RondaJimpitan" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary_brand</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorSecondary">@color/accent_emerald</item>
+        <item name="android:statusBarColor">@color/status_bar_color</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/navigation_bar_color</item>
+    </style>
+</resources>

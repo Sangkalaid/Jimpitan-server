@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html class="h-full" lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+  <title>Workbench Pengujian Aplikasi Ronda &amp; Jimpitan Warga (RT 01)</title>
+  
+  <!-- Google Fonts & Icons -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', Inter, -apple-system, sans-serif;
+      background-color: #0b1329;
+      color: #f8fafc;
+    }
+    .device-mockup {
+      width: 390px;
+      height: 844px;
+      border: 10px solid #1e293b;
+      border-radius: 46px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      background: #000;
+      transition: all 0.3s ease;
+    }
+    .device-mockup.fullscreen-mode {
+      width: 100% !important;
+      height: 100vh !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    .island-notch {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 110px;
+      height: 24px;
+      background-color: #0f172a;
+      border-radius: 20px;
+      z-index: 9999;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+    }
+    .camera-lens {
+      width: 10px;
+      height: 10px;
+      background-color: #1e293b;
+      border-radius: 50%;
+      border: 1px solid #334155;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #f8faff;
+    }
+    .vibrate-pulse {
+      animation: pulseHaptic 0.4s ease-out;
+    }
+    @keyframes pulseHaptic {
+      0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(16, 185, 129, 0.8)); }
+      50% { transform: scale(1.15); filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.9)); }
+      100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(16, 185, 129, 0)); }
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col items-center justify-between p-2 md:p-6 select-none">
+
+  <!-- ================= TOP TESTING CONTROL BAR ================= -->
+  <header class="w-full max-w-5xl bg-slate-800/90 backdrop-blur-md border border-slate-700/80 rounded-2xl p-3 mb-4 shadow-xl flex flex-wrap items-center justify-between gap-3 z-50">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-sky-500 flex items-center justify-center text-white shadow-md">
+        <span class="material-symbols-outlined text-2xl">science</span>
+      </div>
+      <div>
+        <h1 class="text-xs md:text-sm font-extrabold text-white tracking-tight leading-tight">Pengujian Sistem Ronda &amp; Jimpitan Warga</h1>
+        <p class="text-[10.5px] text-slate-400 font-semibold">Kelurahan Bener RT 01 / RW 02 • Lingkungan Pengujian Mandiri</p>
+      </div>
+    </div>
+
+    <!-- Quick Navigation Selectors -->
+    <div class="flex flex-wrap items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-xl border border-slate-700">
+      <button class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-brand-600 text-white shadow-xs hover:bg-brand-500 transition flex items-center gap-1 active:scale-95" onclick="sendStageCommand('screenOpening')">
+        <span class="material-symbols-outlined text-[14px]">motion_photos_on</span>
+        <span>1. Opening</span>
+      </button>
+      <button class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 transition flex items-center gap-1 active:scale-95" onclick="sendStageCommand('screenLogin')">
+        <span class="material-symbols-outlined text-[14px]">lock</span>
+        <span>2. Login / Reg</span>
+      </button>
+      <button class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 transition flex items-center gap-1 active:scale-95" onclick="sendStageCommand('screenDashboard-pengurus')">
+        <span class="material-symbols-outlined text-[14px]">shield</span>
+        <span>3. Mode RT</span>
+      </button>
+      <button class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 transition flex items-center gap-1 active:scale-95" onclick="sendStageCommand('screenDashboard-warga')">
+        <span class="material-symbols-outlined text-[14px]">person</span>
+        <span>4. Mode Warga</span>
+      </button>
+    </div>
+
+    <!-- Device Frame Toggle & Reset -->
+    <div class="flex items-center gap-2">
+      <button class="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 active:scale-95 border border-slate-600" id="btnToggleFrame" onclick="toggleDeviceFrame()">
+        <span class="material-symbols-outlined text-sm" id="iconFrameMode">stay_current_portrait</span>
+        <span id="labelFrameMode">Mode 390px</span>
+      </button>
+      <button class="px-3 py-1.5 rounded-xl bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-xs font-bold transition flex items-center gap-1.5 active:scale-95 border border-rose-700" onclick="resetDemoData()" title="Kosongkan semua data (Reset ke kondisi awal kosong)">
+        <span class="material-symbols-outlined text-sm">restart_alt</span>
+        <span>Reset Data</span>
+      </button>
+      <a href="buka_di_hp.html" target="_blank" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition flex items-center gap-1.5 active:scale-95 shadow-xs" title="Buka di HP Android tanpa APK (Scan QR)">
+        <span class="material-symbols-outlined text-sm">qr_code_scanner</span>
+        <span>Akses HP (QR)</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ================= DEVICE FRAME CONTAINER ================= -->
+  <main class="flex-1 flex items-center justify-center w-full">
+    <div class="device-mockup" id="deviceMockup">
+      <!-- Notch Dynamic Island -->
+      <div class="island-notch" id="islandNotch">
+        <div class="camera-lens"></div>
+      </div>
+
+      <!-- Live Application Iframe -->
+      <iframe id="appIframe" src="index.html"></iframe>
+    </div>
+  </main>
+
+  <!-- ================= BOTTOM ANDROID SYSTEM FEATURE TESTER DOCK ================= -->
+  <footer class="w-full max-w-5xl bg-slate-800/90 backdrop-blur-md border border-slate-700/80 rounded-2xl p-3 mt-4 shadow-xl flex flex-wrap items-center justify-between gap-3 text-xs z-50">
+    <!-- Haptic Vibrate Monitor -->
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400" id="hapticMonitorBadge">
+        <span class="material-symbols-outlined text-base">vibration</span>
+      </div>
+      <div>
+        <span class="font-extrabold text-slate-200 block text-[11px]">Haptic Vibrator</span>
+        <span class="text-[10px] text-slate-400 font-mono" id="hapticLogText">Standby</span>
+      </div>
+    </div>
+
+    <!-- Biometric Simulator -->
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-sky-950 border border-sky-500/50 flex items-center justify-center text-sky-400">
+        <span class="material-symbols-outlined text-base">fingerprint</span>
+      </div>
+      <div>
+        <span class="font-extrabold text-slate-200 block text-[11px]">Android Biometrics</span>
+        <span class="text-[10px] text-slate-400 font-mono">BiometricPrompt Siap</span>
+      </div>
+    </div>
+
+    <!-- GPS Posko Monitor -->
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-amber-950 border border-amber-500/50 flex items-center justify-center text-amber-400">
+        <span class="material-symbols-outlined text-base">location_on</span>
+      </div>
+      <div>
+        <span class="font-extrabold text-slate-200 block text-[11px]">GPS Pos Ronda RT 01</span>
+        <span class="text-[10px] text-slate-400 font-mono">-7.7785° S, 110.3542° E (±3m)</span>
+      </div>
+    </div>
+
+    <!-- WhatsApp Intent Log -->
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-emerald-950 border border-emerald-500/50 flex items-center justify-center text-emerald-400">
+        <span class="material-symbols-outlined text-base">chat</span>
+      </div>
+      <div>
+        <span class="font-extrabold text-slate-200 block text-[11px]">WhatsApp Gateway</span>
+        <span class="text-[10px] text-slate-400 font-mono" id="waLogText">Siap berbagi laporan</span>
+      </div>
+    </div>
+
+    <!-- Supabase Cloud Sync -->
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-indigo-950 border border-indigo-500/50 flex items-center justify-center text-indigo-400">
+        <span class="material-symbols-outlined text-base">cloud_sync</span>
+      </div>
+      <div>
+        <span class="font-extrabold text-slate-200 block text-[11px]">Supabase Cloud</span>
+        <span class="text-[10px] text-emerald-400 font-mono font-semibold" id="cloudTestStatus">riehidioeftegpkndxok</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Control Script -->
+  <script>
+    const iframe = document.getElementById('appIframe');
+    let isFullscreen = false;
+
+    // Listen to messages from iframe
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'HAPTIC_VIBRATE') {
+        const badge = document.getElementById('hapticMonitorBadge');
+        const text = document.getElementById('hapticLogText');
+        if (badge) {
+          badge.classList.remove('vibrate-pulse');
+          void badge.offsetWidth;
+          badge.classList.add('vibrate-pulse');
+        }
+        if (text) text.innerText = `Getar ${event.data.ms}ms aktif`;
+      }
+      if (event.data && event.data.type === 'WA_SHARE') {
+        const waText = document.getElementById('waLogText');
+        if (waText) waText.innerText = 'Laporan terkirim ke WA!';
+      }
+    });
+
+    function toggleDeviceFrame() {
+      isFullscreen = !isFullscreen;
+      const mockup = document.getElementById('deviceMockup');
+      const notch = document.getElementById('islandNotch');
+      const label = document.getElementById('labelFrameMode');
+      const icon = document.getElementById('iconFrameMode');
+
+      if (isFullscreen) {
+        mockup.classList.add('fullscreen-mode');
+        notch.style.display = 'none';
+        label.innerText = 'Layar Penuh';
+        icon.innerText = 'fullscreen_exit';
+      } else {
+        mockup.classList.remove('fullscreen-mode');
+        notch.style.display = 'flex';
+        label.innerText = 'Mode 390px';
+        icon.innerText = 'stay_current_portrait';
+      }
+    }
+
+    function sendStageCommand(cmd) {
+      const win = iframe.contentWindow;
+      if (!win) return;
+
+      if (cmd === 'screenOpening') {
+        win.navigateToScreen('screenOpening');
+      } else if (cmd === 'screenLogin') {
+        win.navigateToScreen('screenLogin');
+      } else if (cmd === 'screenDashboard-pengurus') {
+        win.currentUser = {
+          role: 'pengurus',
+          name: 'BAPAK BAMBANG',
+          title: 'KETUA RT 01 • PENGURUS',
+          phone: '0812-3456-7890',
+          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDmPGdDFJQhpKFP_-Dr6ZrlN8oyQM1_dbMwWR7P6_WKa2NwhAJ9T1g-beX66025sG8k93zQhGYGJVdNsGdZIfNm2lsW0OePWfgkJ_gnYwCWunuTxgrvUKkRvEH8Rs1mYCVqeyD_mAsqtondycsamzOQHX1UEeW65fFwgutQZcyuzRSuG-DW0TifDKeN9avqiFCWLQJflOPca6j_9gMOMm438TTIA93UieneShHSprRwtiXjOTPZh8SBXw'
+        };
+        win.persistState();
+        win.navigateToScreen('screenDashboard');
+        win.showToast('Beralih ke Dashboard Pengurus RT (Bpk. Bambang)');
+      } else if (cmd === 'screenDashboard-warga') {
+        win.currentUser = {
+          role: 'warga',
+          name: 'BUDI SANTOSO',
+          title: 'WARGA RT 01 • GANG MAWAR',
+          phone: '0813-8899-1234',
+          avatar: 'https://lh3.googleusercontent.com/aida/AEtjO1XV6F3NC83zkHOdU8mn_vu1C1-60LbL8FsocLDFpFZZX4yK8qs-5EGDTtrAGpGuyY-yQLnSgAj8-D-gWipXQkeZtIDiWG_t_AOLmeKNAkds3KXbmVixM2GLQhXUsd4pBszBXstdnSOk3CBH7Ux0CGdKRUybUGde6xgB74aMwvcq69IFShmt14TjWLqIIlIkORQKdLKrLwt4HLZQDUC6s_rKDC1BiZkxuL1qE3aQU-GzSo4J2JxyF5xh673z'
+        };
+        win.persistState();
+        win.navigateToScreen('screenDashboard');
+        win.showToast('Beralih ke Dashboard Warga (Budi Santoso)');
+      }
+    }
+
+    function resetDemoData() {
+      localStorage.removeItem('ronda_house_data');
+      localStorage.removeItem('ronda_verif_list');
+      localStorage.removeItem('ronda_current_user');
+      localStorage.setItem('ronda_clean_empty_v3', 'true');
+      iframe.src = 'index.html';
+      const badge = document.getElementById('hapticMonitorBadge');
+      badge.classList.remove('vibrate-pulse');
+      void badge.offsetWidth;
+      badge.classList.add('vibrate-pulse');
+    }
+  </script>
+</body>
+</html>

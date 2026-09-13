@@ -1,0 +1,18 @@
+# Temp & Archives
+*.zip
+extracted/
+
+# Gradle & Android Build Artifacts
+.gradle/
+build/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+.idea/
+*.iml
+*.log
+
+# OS generated
+.DS_Store
+Thumbs.db

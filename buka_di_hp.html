@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panduan Akses Aplikasi Ronda di HP (Tanpa Compile APK)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+</head>
+<body class="min-h-full flex flex-col items-center justify-center p-4 md:p-8">
+  <main class="w-full max-w-xl bg-slate-800/90 border border-slate-700/80 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-md text-center">
+    <!-- Header Icon -->
+    <div class="w-16 h-16 bg-gradient-to-tr from-sky-600 to-emerald-500 rounded-3xl mx-auto flex items-center justify-center shadow-lg mb-4 text-white">
+      <span class="material-symbols-outlined text-3xl">phone_android</span>
+    </div>
+
+    <h1 class="text-xl md:text-2xl font-black text-white tracking-tight">Siap Pakai di HP Tanpa Compile APK</h1>
+    <p class="text-xs md:text-sm text-slate-400 mt-1 font-medium">Aplikasi Ronda &amp; Jimpitan Warga RT 01 / RW 02 Kelurahan Bener</p>
+
+    <!-- QR Code Section -->
+    <div class="my-6 p-5 bg-white rounded-2xl shadow-inner inline-block mx-auto border-4 border-slate-700">
+      <img src="icons/qr_akses_hp.png" alt="Scan QR Code untuk Akses HP" class="w-52 h-52 mx-auto object-contain">
+      <p class="text-[11px] font-extrabold text-slate-800 mt-2 tracking-wide">SCAN DENGAN KAMERA HP</p>
+    </div>
+
+    <!-- Direct URL Link Box -->
+    <div class="bg-slate-900/90 border border-slate-700 rounded-2xl p-4 text-left mb-6">
+      <div class="text-[11px] font-bold text-slate-400 uppercase mb-1">Alamat Akses di Browser HP (Wi-Fi Yang Sama):</div>
+      <a href="http://192.168.1.21:8088/index.html" target="_blank" class="text-sm md:text-base font-black text-sky-400 hover:text-sky-300 break-all underline decoration-sky-500 underline-offset-4 flex items-center gap-1.5">
+        <span>http://192.168.1.21:8088/index.html</span>
+        <span class="material-symbols-outlined text-sm">open_in_new</span>
+      </a>
+      <div class="mt-2 text-[11px] text-slate-400">
+        Atau untuk komputer ini: <a href="http://localhost:8088/index.html" target="_blank" class="text-emerald-400 font-bold hover:underline">http://localhost:8088/index.html</a>
+      </div>
+    </div>
+
+    <!-- Steps to Add to Home Screen -->
+    <div class="text-left space-y-3 bg-slate-800 border border-slate-700 rounded-2xl p-4 md:p-5">
+      <h2 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-emerald-400 text-base">install_mobile</span>
+        <span>Cara Pasang di Layar Utama HP (Persis Seperti APK):</span>
+      </h2>
+      <ol class="text-xs text-slate-300 space-y-2 font-medium list-decimal list-inside">
+        <li>Buka link di atas melalui <strong>Google Chrome</strong> di HP Android Anda.</li>
+        <li>Ketuk tombol menu <strong>titik tiga (⋮)</strong> di pojok kanan atas browser.</li>
+        <li>Pilih menu <strong>"Tambahkan ke Layar Utama"</strong> atau <strong>"Install Aplikasi"</strong>.</li>
+        <li>Ketuk <strong>Install</strong>. Icon resmi Ronda RT 01 akan langsung muncul di menu HP Anda!</li>
+        <li>Buka dari icon tersebut — aplikasi berjalan <strong>fullscreen tanpa address bar</strong>, persis seperti aplikasi APK bawaan.</li>
+      </ol>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+      <a href="index.html" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs transition active:scale-95 flex items-center gap-1.5 shadow-md">
+        <span class="material-symbols-outlined text-sm">play_arrow</span>
+        <span>Buka Aplikasi Sekarang</span>
+      </a>
+      <a href="test_aplikasi_ronda.html" class="px-5 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-xs transition active:scale-95 flex items-center gap-1.5 border border-slate-600">
+        <span class="material-symbols-outlined text-sm">science</span>
+        <span>Buka Ruang Pengujian</span>
+      </a>
+    </div>
+  </main>
+</body>
+</html>

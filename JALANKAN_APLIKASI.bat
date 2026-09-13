@@ -26,19 +26,22 @@ echo.
 echo ====================================================================
 echo                       INFORMASI AKSES
 echo ====================================================================
-echo  [A] Komputer / Laptop ini:
+echo  [★] LINK RESMI ONLINE (Aktif 24 Jam Nonstop - Komputer Bebas Dimatikan):
+echo      https://sangkalaid.github.io/Jimpitan-server/
+echo.
+echo  [A] Komputer / Laptop ini (Offline / Server Lokal):
 echo      - Aplikasi Utama : http://localhost:8088/index.html
 echo      - Ruang Pengujian: http://localhost:8088/test_aplikasi_ronda.html
 echo      - Panduan QR HP  : http://localhost:8088/buka_di_hp.html
 echo.
-echo  [B] Akses Langsung di HP Android / iPhone (Wi-Fi Yang Sama):
-echo      - Alamat URL     : http://192.168.1.21:8088/index.html
+echo  [B] Akses di HP Warga / Pengurus (Bisa Pakai Kuota / Wi-Fi Mana Saja):
+echo      - Langsung Buka : https://sangkalaid.github.io/Jimpitan-server/
 echo.
-echo  [C] Cara Install Jadi Aplikasi di HP (Tanpa APK):
-echo      1. Buka http://192.168.1.21:8088/index.html di Chrome HP
+echo  [C] Cara Pasang Jadi Aplikasi di HP:
+echo      1. Buka https://sangkalaid.github.io/Jimpitan-server/ di Chrome HP
 echo      2. Klik tombol menu titik tiga (⋮) di pojok kanan atas
 echo      3. Klik "Tambahkan ke Layar Utama" / "Install Aplikasi"
-echo      4. Selesai! Icon Ronda RT 01 akan terpasang di layar HP.
+echo      4. Selesai! Icon Ronda RT 01 akan terpasang di menu utama HP.
 echo ====================================================================
 echo.
 echo Tekan sembarang tombol untuk menutup jendela ini (Server tetap aktif).

@@ -2,7 +2,8 @@
 <html class="h-full" lang="id">
 <head>
   <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Aplikasi Ronda &amp; Jimpitan Warga - RT 01 / RW 02 Kelurahan Bener</title>
 
   <!-- Google Fonts: Plus Jakarta Sans & Inter -->
@@ -80,6 +81,10 @@
       font-family: 'Plus Jakarta Sans', Inter, -apple-system, sans-serif;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+    }
+    .app-screen {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
     }
     
     /* Animations from Opening Screen */
@@ -300,7 +305,7 @@
       <div class="mt-4 text-center">
         <p class="text-[10.5px] font-medium text-blue-100/80 flex items-center justify-center gap-1">
           <span class="material-symbols-outlined text-[13px] text-emerald-300">verified_user</span>
-          Terenkripsi End-to-End • Versi 2.4.0 (RT 01)
+          Penyimpanan lokal • Koneksi cloud HTTPS • Versi 2.4.1
         </p>
       </div>
     </div>
@@ -330,7 +335,7 @@
       <div class="flex flex-col items-center text-center mt-2 mb-1">
         <div class="relative mb-2.5">
           <div class="w-24 h-24 rounded-3xl bg-white/15 backdrop-blur-md border border-white/30 p-2 shadow-xl flex items-center justify-center overflow-hidden">
-            <img alt="Logo Ronda & Jimpitan" class="w-full h-full object-cover rounded-2xl shadow-inner" src="https://lh3.googleusercontent.com/aida/AEtjO1XV6F3NC83zkHOdU8mn_vu1C1-60LbL8FsocLDFpFZZX4yK8qs-5EGDTtrAGpGuyY-yQLnSgAj8-D-gWipXQkeZtIDiWG_t_AOLmeKNAkds3KXbmVixM2GLQhXUsd4pBszBXstdnSOk3CBH7Ux0CGdKRUybUGde6xgB74aMwvcq69IFShmt14TjWLqIIlIkORQKdLKrLwt4HLZQDUC6s_rKDC1BiZkxuL1qE3aQU-GzSo4J2JxyF5xh673z"/>
+            <img alt="Logo Ronda & Jimpitan" class="w-full h-full object-cover rounded-2xl shadow-inner" src="icons/icon-192.png"/>
           </div>
         </div>
         <h1 class="text-xl font-extrabold tracking-tight text-white drop-shadow-sm">APLIKASI RONDA</h1>
@@ -436,7 +441,7 @@
 
       <!-- App Version & Security Note -->
       <p class="text-[10px] text-center font-semibold mt-3 text-slate-500">
-        Versi 2.4.0 • Terenkripsi End-to-End Wilayah RT 01
+        Versi 2.4.1 • Data lokal &amp; koneksi cloud HTTPS
       </p>
     </main>
   </section>
@@ -465,7 +470,7 @@
       <div class="flex items-center justify-between mt-1">
         <button class="flex items-center gap-3 text-left group focus:outline-none active:opacity-90 active:scale-95 transition-transform duration-150" onclick="openProfileModal()" type="button">
           <div class="relative">
-            <img alt="Foto Profil" class="profile-img-target w-12 h-12 rounded-full border-2 border-white/90 object-cover shadow-md bg-white" id="headerProfileAvatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmPGdDFJQhpKFP_-Dr6ZrlN8oyQM1_dbMwWR7P6_WKa2NwhAJ9T1g-beX66025sG8k93zQhGYGJVdNsGdZIfNm2lsW0OePWfgkJ_gnYwCWunuTxgrvUKkRvEH8Rs1mYCVqeyD_mAsqtondycsamzOQHX1UEeW65fFwgutQZcyuzRSuG-DW0TifDKeN9avqiFCWLQJflOPca6j_9gMOMm438TTIA93UieneShHSprRwtiXjOTPZh8SBXw">
+            <img alt="Foto Profil" class="profile-img-target w-12 h-12 rounded-full border-2 border-white/90 object-cover shadow-md bg-white" id="headerProfileAvatar" src="icons/icon-192.png">
             <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white text-slate-800 rounded-full flex items-center justify-center shadow-md">
               <i class="ph-bold ph-camera text-[10px]"></i>
             </div>
@@ -897,25 +902,14 @@
       </div>
 
       <div class="space-y-3 my-2">
-        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1.5">
-          <div class="flex items-center justify-between">
-            <span class="text-slate-500 font-medium">Nomor Terdaftar:</span>
-            <span class="font-bold text-slate-800" id="lupaPinPhone">0812-3456-7890</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-slate-500 font-medium">Nama Anggota:</span>
-            <span class="font-bold text-slate-800" id="lupaPinName">Bpk. Bambang / Pengurus</span>
-          </div>
-          <div class="flex items-center justify-between pt-1 border-t border-slate-200">
-            <span class="text-slate-500 font-medium">PIN Keamanan Anda:</span>
-            <span class="font-black text-brand-600 tracking-widest text-sm bg-brand-50 px-2 py-0.5 rounded border border-brand-100" id="lupaPinVal">123456</span>
-          </div>
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs leading-relaxed text-amber-900 font-semibold">
+          Demi keamanan, PIN tidak dapat ditampilkan. Hubungi pengurus RT untuk memverifikasi identitas dan membuat PIN baru.
         </div>
         <p class="text-[11px] text-slate-500 font-medium text-center">
-          PIN telah terkonfirmasi sesuai database Pengurus RT 01.
+          Jangan pernah membagikan PIN melalui chat atau telepon.
         </p>
         <button class="w-full min-h-[44px] py-2.5 px-4 bg-gradient-to-r from-brand-600 to-[#2587d6] text-white text-xs font-bold rounded-xl shadow-md transition" onclick="applyRecoveredPin()" type="button">
-          Gunakan PIN Ini &amp; Masuk
+          Saya Mengerti
         </button>
       </div>
     </div>
@@ -1255,7 +1249,7 @@
       </div>
 
       <div class="relative my-2">
-        <img alt="Foto Profil" class="profile-img-target w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover" id="profileModalAvatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmPGdDFJQhpKFP_-Dr6ZrlN8oyQM1_dbMwWR7P6_WKa2NwhAJ9T1g-beX66025sG8k93zQhGYGJVdNsGdZIfNm2lsW0OePWfgkJ_gnYwCWunuTxgrvUKkRvEH8Rs1mYCVqeyD_mAsqtondycsamzOQHX1UEeW65fFwgutQZcyuzRSuG-DW0TifDKeN9avqiFCWLQJflOPca6j_9gMOMm438TTIA93UieneShHSprRwtiXjOTPZh8SBXw">
+        <img alt="Foto Profil" class="profile-img-target w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover" id="profileModalAvatar" src="icons/icon-192.png">
         <button class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-md hover:bg-brand-600 active:scale-95 transition-transform duration-150" onclick="triggerChangeAvatar()" type="button">
           <span class="material-symbols-outlined text-sm">photo_camera</span>
         </button>
@@ -1431,10 +1425,7 @@
           };
           window.AndroidBridge.authenticateBiometric();
         } else {
-          // Native Web Biometric Simulation
-          setTimeout(() => {
-            onSuccess();
-          }, 450);
+          onError("Biometrik hanya tersedia pada aplikasi Android");
         }
       },
 
@@ -1462,22 +1453,6 @@
        2. REAKTIF DATA MODEL & PERSISTENSI (OFFLINE-FIRST)
        ========================================================= */
     const JIMPITAN_RATE = 500;
-    const TOTAL_HOUSES = 48;
-
-    const residentNames = [
-      "Bpk. Bambang Sutrisno", "Bpk. Budi Santoso", "Ibu Siti Aminah", "Bpk. Hendro Utomo", 
-      "Bpk. Ahmad Fauzi", "Bpk. Hendra Saputra", "Ibu Dewi Lestari", "Bpk. Agus Wijaya",
-      "Bpk. Slamet Riyadi", "Ibu Retno Wulandari", "Bpk. Eko Prasetyo", "Bpk. Joko Susilo",
-      "Bpk. Wahyu Hidayat", "Ibu Sri Mulyani", "Bpk. Dedi Kurniawan", "Bpk. Supriadi",
-      "Ibu Nurul Aini", "Bpk. Tri Wibowo", "Bpk. Rudi Hartono", "Bpk. Edi Suryanto",
-      "Ibu Kartini Rahayu", "Bpk. Fajar Nugroho", "Bpk. Arif Gunawan", "Bpk. Nanang Qosim",
-      "Ibu Anisa Fitri", "Bpk. Teguh Santoso", "Bpk. Bayu Pratama", "Bpk. Rian Hidayat",
-      "Ibu Endang Sulastri", "Bpk. Danang Wicaksono", "Bpk. Sigit Purnomo", "Bpk. Heri Gunawan",
-      "Bpk. Yudi Setiawan", "Ibu Maya Indah", "Bpk. Anton Sujarwo", "Bpk. Indra Kusuma",
-      "Ibu Rina Marlina", "Bpk. Surya Dharma", "Bpk. Lukman Hakim", "Bpk. Hadi Purnomo",
-      "Ibu Tri Astuti", "Bpk. Agus Salim", "Bpk. Muhajir", "Bpk. Haris Munandar",
-      "Ibu Wati Suherman", "Bpk. Benny Irawan", "Bpk. Cecep Supriatna", "Bpk. Doni Firmansyah"
-    ];
 
     function initDefaultHouses() {
       return [];
@@ -1487,6 +1462,25 @@
       return [];
     }
 
+    function readLocalJson(key, fallback) {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || 'null');
+        return value ?? fallback;
+      } catch (error) {
+        console.warn(`[Storage] Data ${key} rusak dan direset`, error);
+        localStorage.removeItem(key);
+        return fallback;
+      }
+    }
+
+    function cleanText(value, maxLength = 120) {
+      return String(value ?? '')
+        .replace(/[<>`"']/g, '')
+        .replace(/[\u0000-\u001f\u007f]/g, ' ')
+        .trim()
+        .slice(0, maxLength);
+    }
+
     // State Loaders (Kosong secara default agar pengguna menambahkan sendiri)
     if (localStorage.getItem('ronda_clean_empty_v3') !== 'true') {
       localStorage.removeItem('ronda_house_data');
@@ -1494,15 +1488,29 @@
       localStorage.setItem('ronda_clean_empty_v3', 'true');
     }
 
-    let houseData = JSON.parse(localStorage.getItem('ronda_house_data') || 'null') || initDefaultHouses();
-    let pendingVerifList = JSON.parse(localStorage.getItem('ronda_verif_list') || 'null') || initDefaultVerifList();
-    let currentUser = JSON.parse(localStorage.getItem('ronda_current_user') || 'null') || {
+    let houseData = readLocalJson('ronda_house_data', initDefaultHouses());
+    let pendingVerifList = readLocalJson('ronda_verif_list', initDefaultVerifList());
+    let currentUser = readLocalJson('ronda_current_user', {
       role: 'pengurus',
       name: 'PENGURUS RT 01',
       title: 'KETUA RT 01 • PENGURUS',
       phone: '',
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDmPGdDFJQhpKFP_-Dr6ZrlN8oyQM1_dbMwWR7P6_WKa2NwhAJ9T1g-beX66025sG8k93zQhGYGJVdNsGdZIfNm2lsW0OePWfgkJ_gnYwCWunuTxgrvUKkRvEH8Rs1mYCVqeyD_mAsqtondycsamzOQHX1UEeW65fFwgutQZcyuzRSuG-DW0TifDKeN9avqiFCWLQJflOPca6j_9gMOMm438TTIA93UieneShHSprRwtiXjOTPZh8SBXw'
-    };
+      avatar: 'icons/icon-192.png'
+    });
+    houseData = Array.isArray(houseData) ? houseData.map(h => ({
+      ...h,
+      name: cleanText(h.name), no: cleanText(h.no, 30), gang: cleanText(h.gang, 50),
+      phone: cleanText(h.phone, 20), status: h.status === 'kosong' ? 'kosong' : 'pasang',
+      time: cleanText(h.time, 40)
+    })) : [];
+    pendingVerifList = Array.isArray(pendingVerifList) ? pendingVerifList.map(item => ({
+      ...item,
+      id: cleanText(item.id, 50), initials: cleanText(item.initials, 4), name: cleanText(item.name),
+      address: cleanText(item.address), phone: cleanText(item.phone, 20), time: cleanText(item.time, 40),
+      status: ['pending', 'approved', 'rejected'].includes(item.status) ? item.status : 'pending'
+    })) : [];
+    currentUser.name = cleanText(currentUser.name) || 'PENGGUNA';
+    currentUser.title = cleanText(currentUser.title) || 'RT 01 / RW 02';
 
     function persistState() {
       localStorage.setItem('ronda_house_data', JSON.stringify(houseData));
@@ -1553,9 +1561,9 @@
           houseData = hData.map(h => ({
             id: h.id,
             no: h.no_rumah || h.no || `No. ${String(h.id).padStart(2, '0')}`,
-            name: h.nama_warga || h.name || 'Warga RT 01',
-            phone: h.phone || '',
-            gang: h.gang || 'Gang Mawar',
+            name: cleanText(h.nama_warga || h.name || 'Warga RT 01'),
+            phone: cleanText(h.phone || '', 20),
+            gang: cleanText(h.gang || 'Gang Mawar', 50),
             status: h.status_jimpitan || h.status || 'pasang',
             nominal: h.nominal || JIMPITAN_RATE,
             time: h.waktu_terakhir || h.time || 'Tersimpan di Cloud'
@@ -1570,11 +1578,11 @@
           pendingVerifList = rData.map(r => ({
             id: String(r.id),
             initials: (r.nama || r.name || 'WG').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(),
-            name: r.nama || r.name || 'Warga Baru',
+            name: cleanText(r.nama || r.name || 'Warga Baru'),
             address: `${r.status_hunian || 'Rumah Pribadi'} • RT 01 / RW 02`,
             rt: 'RT 01 / RW 02',
-            phone: r.phone || '',
-            pin: r.pin || '123456',
+            phone: cleanText(r.phone || '', 20),
+            pin: r.pin || '',
             time: 'Tersimpan di Cloud',
             status: r.status_verifikasi || r.status || 'pending'
           }));
@@ -1685,6 +1693,8 @@
       const idInput = document.getElementById('input-whatsapp');
 
       if (role === 'warga') {
+        btnWarga.setAttribute('aria-selected', 'true');
+        btnPengurus.setAttribute('aria-selected', 'false');
         btnWarga.className = "flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-white shadow-xs text-brand-700 font-extrabold text-xs transition duration-150";
         btnPengurus.className = "flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-slate-600 hover:text-slate-900 font-bold text-xs transition duration-150";
         heading.innerText = "Masuk Akun Warga";
@@ -1693,6 +1703,8 @@
         idInput.value = "";
         showToast("Beralih ke mode Warga");
       } else {
+        btnPengurus.setAttribute('aria-selected', 'true');
+        btnWarga.setAttribute('aria-selected', 'false');
         btnPengurus.className = "flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-white shadow-xs text-brand-700 font-extrabold text-xs transition duration-150";
         btnWarga.className = "flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-slate-600 hover:text-slate-900 font-bold text-xs transition duration-150";
         heading.innerText = "Masuk Akun Pengurus RT";
@@ -1710,9 +1722,11 @@
       if (pinInput.type === 'password') {
         pinInput.type = 'text';
         pinIcon.innerText = 'visibility_off';
+        pinInput.nextElementSibling?.setAttribute('aria-pressed', 'true');
       } else {
         pinInput.type = 'password';
         pinIcon.innerText = 'visibility';
+        pinInput.nextElementSibling?.setAttribute('aria-pressed', 'false');
       }
     }
 
@@ -1726,6 +1740,14 @@
         showToast("Silakan masukkan Nomor WhatsApp & PIN!", false);
         return;
       }
+      if (!/^\d{6}$/.test(pinInput)) {
+        showToast("PIN harus terdiri dari 6 angka.", false);
+        return;
+      }
+      if (phoneInput.length < 4) {
+        showToast("Nomor WhatsApp atau ID tidak valid.", false);
+        return;
+      }
 
       if (selectedAuthRole === 'pengurus') {
         currentUser = {
@@ -1733,7 +1755,7 @@
           name: 'PENGURUS RT 01',
           title: 'KETUA RT 01 • PENGURUS',
           phone: phoneInput,
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDmPGdDFJQhpKFP_-Dr6ZrlN8oyQM1_dbMwWR7P6_WKa2NwhAJ9T1g-beX66025sG8k93zQhGYGJVdNsGdZIfNm2lsW0OePWfgkJ_gnYwCWunuTxgrvUKkRvEH8Rs1mYCVqeyD_mAsqtondycsamzOQHX1UEeW65fFwgutQZcyuzRSuG-DW0TifDKeN9avqiFCWLQJflOPca6j_9gMOMm438TTIA93UieneShHSprRwtiXjOTPZh8SBXw'
+          avatar: 'icons/icon-192.png'
         };
         persistState();
         showToast("Selamat Datang! Akses Pengurus RT aktif.");
@@ -1751,7 +1773,7 @@
           name: citizenName,
           title: 'WARGA RT 01 • LINGKUNGAN BENER',
           phone: phoneInput,
-          avatar: 'https://lh3.googleusercontent.com/aida/AEtjO1XV6F3NC83zkHOdU8mn_vu1C1-60LbL8FsocLDFpFZZX4yK8qs-5EGDTtrAGpGuyY-yQLnSgAj8-D-gWipXQkeZtIDiWG_t_AOLmeKNAkds3KXbmVixM2GLQhXUsd4pBszBXstdnSOk3CBH7Ux0CGdKRUybUGde6xgB74aMwvcq69IFShmt14TjWLqIIlIkORQKdLKrLwt4HLZQDUC6s_rKDC1BiZkxuL1qE3aQU-GzSo4J2JxyF5xh673z'
+          avatar: 'icons/icon-192.png'
         };
         persistState();
         showToast(`Selamat Datang ${citizenName}! Mode Warga aktif.`);
@@ -1793,11 +1815,24 @@
     function handleRegistrationSubmit(e) {
       e.preventDefault();
       AndroidSystem.vibrate(35);
-      const name = document.getElementById('reg-name').value.trim();
-      const phone = document.getElementById('reg-phone').value.trim();
+      const name = cleanText(document.getElementById('reg-name').value);
+      const phone = document.getElementById('reg-phone').value.replace(/\D/g, '').slice(0, 15);
       const houseStatus = document.getElementById('reg-status').value;
       const pin = document.getElementById('reg-pin').value;
       const pinConfirm = document.getElementById('reg-pin-confirm').value;
+
+      if (name.length < 3 || !/^\d{8,15}$/.test(phone.replace(/\D/g, ''))) {
+        showToast("Nama atau nomor WhatsApp belum valid.", false);
+        return;
+      }
+      if (!/^\d{6}$/.test(pin)) {
+        showToast("PIN harus terdiri dari 6 angka.", false);
+        return;
+      }
+      if (pendingVerifList.some(item => item.phone === phone)) {
+        showToast("Nomor WhatsApp ini sudah pernah didaftarkan.", false);
+        return;
+      }
 
       if (pin !== pinConfirm) {
         showToast("PIN dan Konfirmasi PIN harus sama persis!", false);
@@ -1897,10 +1932,8 @@
     }
 
     function applyRecoveredPin() {
-      document.getElementById('input-whatsapp').value = '0812-3456-7890';
-      document.getElementById('input-pin').value = '123456';
       closeLupaPinModal();
-      showToast("PIN 123456 berhasil diterapkan.");
+      showToast("Hubungi pengurus RT untuk verifikasi dan penggantian PIN.", false);
     }
 
     /* =========================================================
@@ -2297,7 +2330,7 @@
       }
     }
 
-    function handleGpsRecordStatus(newStatus) {
+    function saveJimpitanStatus(newStatus, position = null) {
       AndroidSystem.vibrate(45);
       if (houseData.length === 0) {
         showToast("Belum ada data rumah terdaftar. Daftarkan warga terlebih dahulu!", false);
@@ -2311,6 +2344,13 @@
         target.status = newStatus;
         const now = new Date();
         target.time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} WIB`;
+        if (position) {
+          target.lastLocation = {
+            latitude: Number(position.coords.latitude.toFixed(6)),
+            longitude: Number(position.coords.longitude.toFixed(6)),
+            accuracy: Math.round(position.coords.accuracy)
+          };
+        }
         persistState();
         renderAllDashboardComponents();
         closeJimpitanModal();
@@ -2341,6 +2381,19 @@
           }).catch(e => console.warn(e));
         }
       }
+    }
+
+    function handleGpsRecordStatus(newStatus) {
+      if (!navigator.geolocation) {
+        showToast("GPS tidak didukung perangkat ini.", false);
+        return;
+      }
+      showToast("Memeriksa lokasi petugas...");
+      navigator.geolocation.getCurrentPosition(
+        position => saveJimpitanStatus(newStatus, position),
+        () => showToast("Izin dan lokasi GPS diperlukan untuk mencatat jimpitan.", false),
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
+      );
     }
 
     /* =========================================================
@@ -2674,9 +2727,12 @@
       if (kosongEl) kosongEl.innerText = `${stats.kosong} Rumah`;
 
       if (tab === 'bulan') {
-        if (val) val.innerText = `Rp ${(stats.pasang * JIMPITAN_RATE * 30).toLocaleString('id-ID')}`;
-        if (badge) badge.innerText = 'September (30 Hari)';
-        if (sub) sub.innerText = `${stats.pasang} rumah x Rp 500 x 30 hari`;
+        const now = new Date();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const monthName = now.toLocaleDateString('id-ID', { month: 'long' });
+        if (val) val.innerText = `Rp ${(stats.pasang * JIMPITAN_RATE * daysInMonth).toLocaleString('id-ID')}`;
+        if (badge) badge.innerText = `${monthName} (${daysInMonth} Hari)`;
+        if (sub) sub.innerText = `${stats.pasang} rumah x Rp 500 x ${daysInMonth} hari`;
       } else if (tab === 'minggu') {
         if (val) val.innerText = `Rp ${(stats.pasang * JIMPITAN_RATE * 7).toLocaleString('id-ID')}`;
         if (badge) badge.innerText = 'Minggu Ini (7 Hari)';
@@ -2706,10 +2762,13 @@
 
     function copyReportText() {
       const text = generateReportMessage();
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text);
+      if (!navigator.clipboard?.writeText) {
+        showToast('Clipboard tidak tersedia. Gunakan tombol Bagikan.', false);
+        return;
       }
-      showToast('Teks laporan berhasil disalin ke clipboard!');
+      navigator.clipboard.writeText(text)
+        .then(() => showToast('Teks laporan berhasil disalin ke clipboard!'))
+        .catch(() => showToast('Teks gagal disalin. Gunakan tombol Bagikan.', false));
     }
 
     function shareReportToWhatsApp() {
@@ -2744,6 +2803,11 @@
     function handleAvatarFileChange(e) {
       const file = e.target.files && e.target.files[0];
       if (file) {
+        if (!file.type.startsWith('image/') || file.size > 2 * 1024 * 1024) {
+          showToast('Pilih gambar JPG/PNG maksimal 2 MB.', false);
+          e.target.value = '';
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(evt) {
           currentUser.avatar = evt.target.result;
@@ -2770,19 +2834,11 @@
       if (state === 'pending') {
         if (btnP) btnP.className = 'px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-600 text-white shadow-xs active:scale-95 transition-transform duration-150';
         if (btnC) btnC.className = 'px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-600 active:scale-95 transition-transform duration-150';
-        // Set first 2 to kosong temporarily for view simulation
-        if (houseData.length >= 1) houseData[0].status = 'kosong';
-        if (houseData.length >= 2) houseData[1].status = 'kosong';
-        renderAllDashboardComponents();
-        showToast('Menampilkan status patroli dalam proses');
+        openStatDetail('kosong');
       } else {
         if (btnC) btnC.className = 'px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-700 text-white shadow-xs active:scale-95 transition-transform duration-150';
         if (btnP) btnP.className = 'px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-600 active:scale-95 transition-transform duration-150';
-        // Reset all to pasang
-        houseData.forEach(h => h.status = 'pasang');
-        persistState();
-        renderAllDashboardComponents();
-        showToast('Semua titik jimpitan 100% selesai!');
+        openStatDetail('pasang');
       }
     }
 
@@ -2819,6 +2875,12 @@
         const mins = String(now.getMinutes()).padStart(2, '0');
         document.querySelectorAll('.live-status-time').forEach(el => {
           el.innerText = `${hrs}:${mins}`;
+        });
+      }
+      const shiftScheduleTitle = document.getElementById('shiftScheduleTitle');
+      if (shiftScheduleTitle) {
+        shiftScheduleTitle.innerText = new Date().toLocaleDateString('id-ID', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
         });
       }
       setInterval(updateLiveTime, 30000);

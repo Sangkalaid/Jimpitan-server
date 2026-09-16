@@ -15,12 +15,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import androidx.webkit.WebViewAssetLoader
 import java.util.concurrent.Executor
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
+    private var geolocationCallback: GeolocationPermissions.Callback? = null
+    private var geolocationOrigin: String? = null
+    private var pendingNotificationAction: (() -> Unit)? = null
 
     private lateinit var executor: Executor
     private lateinit var biometricPrompt: BiometricPrompt
@@ -43,11 +47,19 @@ class MainActivity : AppCompatActivity() {
         fileUploadCallback = null
     }
 
-    // Permission Request Launcher
-    private val requestPermissionsLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        // Permissions handled
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        geolocationCallback?.invoke(geolocationOrigin, granted, false)
+        geolocationCallback = null
+        geolocationOrigin = null
+    }
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) pendingNotificationAction?.invoke()
+        pendingNotificationAction = null
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -71,16 +83,6 @@ class MainActivity : AppCompatActivity() {
         rootLayout.addView(webView)
         setContentView(rootLayout)
 
-        // Request runtime permissions if required (Location, Camera, Notifications)
-        val permissionsToRequest = mutableListOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-        requestPermissionsLauncher.launch(permissionsToRequest.toTypedArray())
-
         // Setup Biometric Prompt
         setupBiometrics()
 
@@ -91,48 +93,71 @@ class MainActivity : AppCompatActivity() {
         setupBackNavigation()
 
         // Load offline web app assets
-        webView.loadUrl("file:///android_asset/www/index.html")
+        webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html")
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
+        val assetLoader = WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+
         with(webView.settings) {
             javaScriptEnabled = true
             domStorageEnabled = true
             databaseEnabled = true
-            allowFileAccess = true
+            allowFileAccess = false
+            allowContentAccess = false
+            mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
             setGeolocationEnabled(true)
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_DEFAULT
             useWideViewPort = true
             loadWithOverviewMode = true
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                safeBrowsingEnabled = true
+            }
         }
 
         // Register the Android Bridge Interface
         webView.addJavascriptInterface(AndroidBridge(this), "AndroidBridge")
 
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+                return request?.url?.let(assetLoader::shouldInterceptRequest)
+            }
+
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val url = request?.url?.toString() ?: return false
-                if (url.startsWith("tel:") || url.startsWith("https://wa.me") || url.startsWith("https://api.whatsapp.com")) {
-                    try {
-                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                        return true
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                val uri = request?.url ?: return false
+                if (uri.scheme == "https" && uri.host == "appassets.androidplatform.net") {
+                    return false
                 }
-                return false
+
+                return try {
+                    startActivity(Intent(Intent.ACTION_VIEW, uri))
+                    true
+                } catch (_: Exception) {
+                    true
+                }
             }
         }
 
         webView.webChromeClient = object : WebChromeClient() {
-            // Native Geolocation Permission Auto-Approval for Posko Ronda
             override fun onGeolocationPermissionsShowPrompt(
                 origin: String?,
                 callback: GeolocationPermissions.Callback?
             ) {
-                callback?.invoke(origin, true, false)
+                val granted = ContextCompat.checkSelfPermission(
+                    this@MainActivity,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+                if (granted) {
+                    callback?.invoke(origin, true, false)
+                } else {
+                    geolocationOrigin = origin
+                    geolocationCallback = callback
+                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
             }
 
             // Native Android Image / Camera Chooser for Avatar Profile
@@ -194,14 +219,24 @@ class MainActivity : AppCompatActivity() {
                 biometricPrompt.authenticate(promptInfo)
             }
             else -> {
-                // If device has no hardware biometric or not enrolled, fallback cleanly
                 webView.post {
                     webView.evaluateJavascript(
-                        "if (typeof window._biometricCallback === 'function') { window._biometricCallback(true); }",
+                        "if (typeof window._biometricCallback === 'function') { window._biometricCallback(false); }",
                         null
                     )
                 }
             }
+        }
+    }
+
+    fun runWithNotificationPermission(action: () -> Unit) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        ) {
+            action()
+        } else {
+            pendingNotificationAction = action
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
@@ -229,5 +264,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    override fun onDestroy() {
+        webView.removeJavascriptInterface("AndroidBridge")
+        webView.stopLoading()
+        webView.destroy()
+        super.onDestroy()
     }
 }

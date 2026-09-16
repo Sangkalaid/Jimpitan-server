@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ronda-rt01-v1';
+const CACHE_NAME = 'ronda-rt01-v2.4.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -54,7 +54,10 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return networkResponse;
-      }).catch(() => cachedResponse);
+      }).catch(() => cachedResponse || new Response('Aplikasi sedang offline.', {
+        status: 503,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      }));
 
       return cachedResponse || fetchPromise;
     })

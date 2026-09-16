@@ -11,8 +11,8 @@ android {
         applicationId "id.kelurahan.bener.ronda"
         minSdk 26
         targetSdk 34
-        versionCode 240
-        versionName "2.4.0"
+        versionCode 241
+        versionName "2.4.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -22,7 +22,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -48,4 +49,19 @@ dependencies {
     implementation 'androidx.activity:activity-ktx:1.8.2'
     implementation 'androidx.webkit:webkit:1.10.0'
     implementation 'androidx.biometric:biometric:1.2.0-alpha05'
+}
+
+tasks.register('syncWebAssets', Copy) {
+    def webRoot = rootProject.projectDir.parentFile
+    from(webRoot) {
+        include 'index.html', 'manifest.json', 'sw.js', 'favicon.ico'
+    }
+    from(new File(webRoot, 'icons')) {
+        into 'icons'
+    }
+    into layout.projectDirectory.dir('src/main/assets/www')
+}
+
+tasks.named('preBuild').configure {
+    dependsOn tasks.named('syncWebAssets')
 }

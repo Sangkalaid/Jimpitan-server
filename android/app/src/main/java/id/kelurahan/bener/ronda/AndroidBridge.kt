@@ -106,7 +106,8 @@ class AndroidBridge(private val activity: MainActivity) {
     @JavascriptInterface
     fun sendNotification(title: String, message: String) {
         activity.runOnUiThread {
-            try {
+            activity.runWithNotificationPermission {
+              try {
                 val channelId = "ronda_patrol_channel"
                 val notificationManager = activity.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -130,8 +131,9 @@ class AndroidBridge(private val activity: MainActivity) {
                     .build()
 
                 notificationManager.notify(System.currentTimeMillis().toInt(), notification)
-            } catch (e: Exception) {
-                e.printStackTrace()
+              } catch (e: Exception) {
+                  e.printStackTrace()
+              }
             }
         }
     }

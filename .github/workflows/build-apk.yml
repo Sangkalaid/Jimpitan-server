@@ -66,3 +66,4 @@ jobs:
           path: |
             test-results/
             android/app/build/reports/
+          if-no-files-found: ignore

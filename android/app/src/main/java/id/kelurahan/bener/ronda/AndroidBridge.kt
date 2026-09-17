@@ -14,6 +14,17 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 
 class AndroidBridge(private val activity: MainActivity) {
+    private val secureStore = SecureStore(activity)
+
+    @JavascriptInterface fun deviceId(): String = secureStore.deviceId()
+    @JavascriptInterface fun readSession(): String = secureStore.readSession()
+    @JavascriptInterface fun writeSession(token: String) = secureStore.writeSession(token)
+    @JavascriptInterface fun enrollBiometric(credential: String) {
+        activity.runOnUiThread { secureStore.biometric(credential) }
+    }
+    @JavascriptInterface fun unlockBiometric() {
+        activity.runOnUiThread { secureStore.biometric() }
+    }
 
     private val vibrator: Vibrator? by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

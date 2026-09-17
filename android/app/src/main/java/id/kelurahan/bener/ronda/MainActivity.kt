@@ -20,6 +20,13 @@ import java.util.concurrent.Executor
 
 class MainActivity : AppCompatActivity() {
 
+    fun deliverNative(callback: String, value: Any) {
+        val json = if (value is Boolean) value.toString() else org.json.JSONObject.quote(value.toString())
+        webView.post {
+            webView.evaluateJavascript("if (typeof window.$callback === 'function') window.$callback($json);", null)
+        }
+    }
+
     private lateinit var webView: WebView
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private var geolocationCallback: GeolocationPermissions.Callback? = null
@@ -48,8 +55,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val locationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
+        val granted = grants[Manifest.permission.ACCESS_FINE_LOCATION] == true
         geolocationCallback?.invoke(geolocationOrigin, granted, false)
         geolocationCallback = null
         geolocationOrigin = null
@@ -147,6 +155,10 @@ class MainActivity : AppCompatActivity() {
                 origin: String?,
                 callback: GeolocationPermissions.Callback?
             ) {
+                if (origin?.trimEnd('/') != "https://appassets.androidplatform.net") {
+                    callback?.invoke(origin, false, false)
+                    return
+                }
                 val granted = ContextCompat.checkSelfPermission(
                     this@MainActivity,
                     Manifest.permission.ACCESS_FINE_LOCATION
@@ -156,7 +168,7 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     geolocationOrigin = origin
                     geolocationCallback = callback
-                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
                 }
             }
 

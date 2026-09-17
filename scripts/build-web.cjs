@@ -1,0 +1,10 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const {execFileSync} = require('node:child_process');
+const root = path.resolve(__dirname,'..');
+fs.mkdirSync(path.join(root,'vendor'),{recursive:true});
+fs.copyFileSync(path.join(root,'node_modules/@supabase/supabase-js/dist/umd/supabase.js'),path.join(root,'vendor/supabase.js'));
+fs.cpSync(path.join(root,'node_modules/@phosphor-icons/web/src'),path.join(root,'vendor/phosphor'),{recursive:true});
+fs.cpSync(path.join(root,'node_modules/leaflet/dist'),path.join(root,'vendor/leaflet'),{recursive:true});
+execFileSync(process.execPath,[path.join(root,'node_modules/tailwindcss/lib/cli.js'),'-c','tailwind.config.cjs','-i','styles/input.css','-o','vendor/tailwind.css','--minify'],{cwd:root,stdio:'inherit'});
+console.log('Web assets built.');

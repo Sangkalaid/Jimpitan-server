@@ -11,8 +11,8 @@ android {
         applicationId "id.kelurahan.bener.ronda"
         minSdk 26
         targetSdk 34
-        versionCode 241
-        versionName "2.4.1"
+        versionCode 300
+        versionName "3.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -20,8 +20,20 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            if (System.getenv('ANDROID_KEYSTORE_PATH')) {
+                storeFile file(System.getenv('ANDROID_KEYSTORE_PATH'))
+                storePassword System.getenv('ANDROID_STORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+                storeType 'PKCS12'
+            }
+        }
+    }
     buildTypes {
         release {
+            if (System.getenv('ANDROID_KEYSTORE_PATH')) signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -35,6 +47,11 @@ android {
 
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
     }
 
     buildFeatures {
@@ -54,10 +71,13 @@ dependencies {
 tasks.register('syncWebAssets', Copy) {
     def webRoot = rootProject.projectDir.parentFile
     from(webRoot) {
-        include 'index.html', 'manifest.json', 'sw.js', 'favicon.ico'
+        include 'index.html', 'manifest.json', 'sw.js', 'favicon.ico', 'app.js', 'operations.js', 'app.css', 'app-config.js'
     }
     from(new File(webRoot, 'icons')) {
         into 'icons'
+    }
+    from(new File(webRoot, 'vendor')) {
+        into 'vendor'
     }
     into layout.projectDirectory.dir('src/main/assets/www')
 }

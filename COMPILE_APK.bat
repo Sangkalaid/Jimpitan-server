@@ -16,8 +16,14 @@ copy /y "%~dp0index.html" "%~dp0android\app\src\main\assets\www\index.html" > nu
 copy /y "%~dp0manifest.json" "%~dp0android\app\src\main\assets\www\manifest.json" > nul
 copy /y "%~dp0sw.js" "%~dp0android\app\src\main\assets\www\sw.js" > nul
 copy /y "%~dp0favicon.ico" "%~dp0android\app\src\main\assets\www\favicon.ico" > nul
+copy /y "%~dp0app.js" "%~dp0android\app\src\main\assets\www\app.js" > nul
+copy /y "%~dp0operations.js" "%~dp0android\app\src\main\assets\www\operations.js" > nul
+copy /y "%~dp0app.css" "%~dp0android\app\src\main\assets\www\app.css" > nul
+copy /y "%~dp0app-config.js" "%~dp0android\app\src\main\assets\www\app-config.js" > nul
 if not exist "%~dp0android\app\src\main\assets\www\icons" mkdir "%~dp0android\app\src\main\assets\www\icons"
 copy /y "%~dp0icons\*.*" "%~dp0android\app\src\main\assets\www\icons\" > nul
+if not exist "%~dp0android\app\src\main\assets\www\vendor" mkdir "%~dp0android\app\src\main\assets\www\vendor"
+xcopy /s /e /y "%~dp0vendor\*.*" "%~dp0android\app\src\main\assets\www\vendor\" > nul
 echo [OK] Aset web berhasil disinkronkan ke android/app/src/main/assets/www!
 echo.
 

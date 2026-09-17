@@ -1,5 +1,6 @@
 # Temp & Archives
 *.zip
+*.rar
 extracted/
 
 # Gradle & Android Build Artifacts
@@ -12,6 +13,13 @@ android/local.properties
 .idea/
 *.iml
 *.log
+node_modules/
+test-results/
+/vendor/
+android/app/src/main/assets/www/vendor/
+*.jks
+*.keystore
+.env*
 
 # OS generated
 .DS_Store

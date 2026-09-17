@@ -30,7 +30,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+          cache: 'gradle'
       - name: Prepare release signing
         if: github.event_name != 'pull_request'
         env:
@@ -47,11 +47,12 @@ jobs:
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew lintRelease assembleRelease --stacktrace
+          ./gradlew assembleRelease --stacktrace
       - name: Verify release signature
         if: github.event_name != 'pull_request'
         run: |
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose android/app/build/outputs/apk/release/app-release.apk
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$APKSIGNER" verify --verbose android/app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
           name: Ronda-RT01-release

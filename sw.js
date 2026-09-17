@@ -1,7 +1,15 @@
-const CACHE_NAME = 'ronda-rt01-v2.4.1';
+const CACHE_NAME = 'ronda-rt01-v3.0.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './app.js',
+  './operations.js',
+  './app.css',
+  './app-config.js',
+  './vendor/tailwind.css',
+  './vendor/supabase.js',
+  './vendor/leaflet/leaflet.js',
+  './vendor/leaflet/leaflet.css',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -40,7 +48,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   
   // Skip non-GET requests or Supabase/API requests
-  if (req.method !== 'GET' || req.url.includes('supabase.co')) {
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) {
     return;
   }
 

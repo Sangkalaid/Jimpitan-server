@@ -1,0 +1,39 @@
+:root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
+* { box-sizing: border-box; letter-spacing: 0 !important; }
+html, body { min-height: 100%; overflow-x: hidden; }
+body { padding: 0; align-items: flex-start; }
+.app-screen { min-height: 100dvh !important; height: auto !important; max-height: none !important; max-width: 560px !important; }
+.app-screen > header { padding-top: max(16px, env(safe-area-inset-top)); }
+.app-screen > header > div:first-child:has(.live-status-time) { display: none; }
+.sheet-modal { max-height: calc(100dvh - env(safe-area-inset-top) - 12px) !important; overflow-y: auto; overscroll-behavior: contain; padding-bottom: max(20px, var(--safe-bottom)) !important; max-width: 560px !important; }
+.fixed.inset-0 { padding-top: env(safe-area-inset-top); }
+button, input, select, textarea { min-width: 0; }
+button { overflow-wrap: anywhere; }
+button:disabled { opacity: .55; cursor: wait; }
+input, select, textarea { max-width: 100%; }
+p, h1, h2, h3, span { overflow-wrap: anywhere; }
+.flex > div { min-width: 0; }
+nav.fixed { padding-bottom: max(12px, var(--safe-bottom)); max-width: 560px !important; }
+#screenDashboard { padding-bottom: calc(100px + var(--safe-bottom)); }
+#screenLogin main { justify-content: flex-start; }
+#loginAvatar { border-radius: 50%; }
+.ronda-list { display: grid; gap: 12px; margin: 16px 0; }
+.ronda-row { padding: 12px 0; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+.ronda-row p { margin: 4px 0; }
+.ronda-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ronda-button { padding: 10px 14px; min-height: 44px; background: #1872b9; color: white; border-radius: 8px; font-weight: 700; font-size: 12px; }
+.ronda-secondary { background: #e2e8f0; color: #1e293b; }
+.ronda-danger { background: #be123c; }
+.ronda-field { display: block; width: 100%; border: 1px solid #cbd5e1; padding: 12px; margin: 6px 0 14px; border-radius: 8px; background: white; font-size: 14px; }
+.ronda-label { font-size: 12px; font-weight: 700; }
+.ronda-empty { text-align: center; padding: 28px 8px; color: #64748b; font-size: 13px; }
+#routeMapModal .sheet-modal { height: calc(100dvh - env(safe-area-inset-top)); max-height: none !important; border-radius: 0; }
+#googleMap { flex: 1; min-height: 240px; width: 100%; }
+#mapStatus { padding: 8px 0; font-size: 12px; }
+#globalToast { max-width: calc(100vw - 24px); top: max(16px, env(safe-area-inset-top)); z-index: 200; }
+@media (max-width: 360px) {
+  #screenDashboard main { padding-left: 10px; padding-right: 10px; }
+  [aria-label="Status Jimpitan"] { gap: 6px; }
+  [aria-label="Status Jimpitan"] > button { padding: 8px; }
+  [aria-label="Status Jimpitan"] > button > div:first-child { flex-wrap: wrap; gap: 4px; }
+}

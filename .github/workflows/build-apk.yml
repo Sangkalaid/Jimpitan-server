@@ -31,6 +31,10 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: 'gradle'
+      - name: Install Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
       - name: Prepare release signing
         if: github.event_name != 'pull_request'
         env:
@@ -47,7 +51,7 @@ jobs:
         run: |
           chmod +x android/gradlew
           cd android
-          ./gradlew assembleRelease --stacktrace
+          ./gradlew lintRelease assembleRelease --stacktrace
       - name: Verify release signature
         if: github.event_name != 'pull_request'
         run: |

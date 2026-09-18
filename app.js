@@ -9,6 +9,7 @@ let currentUser = null;
 let currentScreenId = 'screenLogin';
 let houseData = [];
 let pendingVerifList = [];
+let waitingBiometricSetup = false;
 let sessionToken = window.AndroidBridge?.readSession?.() || localStorage.getItem('ronda_session') || '';
 let lastAccount = readLocalJson('ronda_last_account', null);
 let deviceId = window.AndroidBridge?.deviceId?.() || localStorage.getItem('ronda_device');
@@ -78,7 +79,7 @@ function renderPersonalLogin(standard=false) {
   $('loginHeading').textContent=account?'Selamat Datang':'Masuk Akun';
   $('loginSubheading').textContent=account?.name || 'Ronda & Jimpitan RT 01 / RW 02';
   $('input-whatsapp').value=account?.phone || '';
-  $('input-whatsapp').readOnly=!!account;
+  $('input-whatsapp').readOnly=false;
   $('input-pin').value='';
   $('biometricLogin').classList.toggle('hidden',!account?.biometric || !window.AndroidBridge?.unlockBiometric);
   $('switchAccount').classList.toggle('hidden',!account);
@@ -88,11 +89,20 @@ function clearActiveSession() {
   document.querySelectorAll('.fixed.inset-0.flex').forEach(el=>closeModalById(el.id));
   navigateToScreen('screenLogin'); renderPersonalLogin();
 }
+function enterDashboard() {
+  if(!currentUser) return;
+  renderIdentity(); navigateToScreen('screenDashboard');
+  fetchSupabaseData();
+}
 async function finishLogin(result) {
   storeSession(result.token); currentUser=result.account; updateHistory();
-  $('input-pin').value=''; renderIdentity(); navigateToScreen('screenDashboard');
-  await fetchSupabaseData();
-  if (window.AndroidBridge?.enrollBiometric && !lastAccount.biometricAsked) openModalById('biometricSetup');
+  $('input-pin').value='';
+  if (window.AndroidBridge?.enrollBiometric && !lastAccount.biometricAsked) {
+    waitingBiometricSetup=true;
+    openModalById('biometricSetup');
+    return;
+  }
+  enterDashboard();
 }
 async function handleLoginSubmit(event) {
   event?.preventDefault();
@@ -144,7 +154,11 @@ function closeRegisterModalAndFillLogin() { closeRegisterModal(); renderPersonal
 function openLupaPinModal() { showToast('Hubungi pengurus RT untuk bantuan pemulihan akun.',false); }
 function closeLupaPinModal() { closeModalById('modalLupaPin'); }
 function applyRecoveredPin() { closeLupaPinModal(); openLupaPinModal(); }
-function skipBiometric() { lastAccount.biometricAsked=true; localStorage.setItem('ronda_last_account',JSON.stringify(lastAccount)); closeModalById('biometricSetup'); }
+function skipBiometric() {
+  lastAccount.biometricAsked=true; localStorage.setItem('ronda_last_account',JSON.stringify(lastAccount));
+  closeModalById('biometricSetup');
+  if(waitingBiometricSetup) { waitingBiometricSetup=false; enterDashboard(); }
+}
 async function enableBiometric() {
   await runAction($('enableBiometric'),async()=>{
     const {credential}=await api('biometric_enable',{},true);
@@ -197,7 +211,7 @@ function renderVerifPendingList() {
   $('pendingVerifBadge').textContent=pendingVerifList.filter(x=>x.status==='pending').length+' Menunggu';
   $('verifPendingListContainer').innerHTML=pendingVerifList.map(a=>{
     const canDelete=a.id!==currentUser.id && a.role!=='master';
-    return `<div class="ronda-row"><strong>${escapeHtml(a.name)}</strong><p>${escapeHtml(a.phone)} / ${escapeHtml(a.status)}</p><div class="ronda-actions">${a.status==='pending'?`<button class="ronda-button" onclick="handleVerifDecision('${a.id}',true)">Setujui</button><button class="ronda-button ronda-danger" onclick="handleVerifDecision('${a.id}',false)">Tolak</button>`:''}${currentUser.role==='master' && a.status==='approved' && a.role!=='master'?`<label class="ronda-label">Hak akses<select class="ronda-field" onchange="changeRole('${a.id}',this.value)">${['warga','pengurus','admin'].map(role=>`<option ${a.role===role?'selected':''}>${role}</option>`).join('')}</select></label>`:''}${canDelete?`<button class="ronda-button ronda-danger" onclick="deleteAccount('${a.id}','${escapeHtml(a.name)}')">Hapus Akun</button>`:''}</div></div>`;
+    return `<div class="ronda-row"><strong>${escapeHtml(a.name)}</strong><p>${escapeHtml(a.phone)} / ${escapeHtml(a.status)}</p><div class="ronda-actions">${a.status==='pending'?`<button class="ronda-button compact" onclick="handleVerifDecision('${a.id}',true)">Setujui</button><button class="ronda-button ronda-danger compact" onclick="handleVerifDecision('${a.id}',false)">Tolak</button>`:''}${currentUser.role==='master' && a.status==='approved' && a.role!=='master'?`<label class="ronda-label">Akses<select class="ronda-field" onchange="changeRole('${a.id}',this.value)">${['warga','pengurus','admin'].map(role=>`<option ${a.role===role?'selected':''}>${role}</option>`).join('')}</select></label>`:''}${canDelete?`<button class="ronda-button ronda-danger compact" onclick="deleteAccount('${a.id}','${escapeHtml(a.name)}')">Hapus</button>`:''}</div></div>`;
   }).join('') || '<p class="ronda-empty">Belum ada pendaftaran.</p>';
 }
 async function handleVerifDecision(id,approved) { await runAction(null,async()=>{await api('verify',{id,status:approved?'approved':'rejected'},true); await openVerifAkunModal();}); }
@@ -212,8 +226,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
   renderPersonalLogin(); navigateToScreen('screenLogin');
   $('shiftScheduleTitle').textContent=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
   if(sessionToken) {
+    if(lastAccount?.biometric && window.AndroidBridge?.unlockBiometric) {
+      handleBiometricLogin();
+      return;
+    }
     $('btnLoginSubmit').disabled=true;
-    try { const result=await api('session',{},true); currentUser=result.account; updateHistory(); renderIdentity(); navigateToScreen('screenDashboard'); await fetchSupabaseData(); }
+    try { const result=await api('session',{},true); currentUser=result.account; updateHistory(); enterDashboard(); }
     catch(e) { console.warn('[Session]',e); if(e.code==='SESSION') storeSession(''); showToast(e.message,false); }
     finally { $('btnLoginSubmit').disabled=false; }
   }

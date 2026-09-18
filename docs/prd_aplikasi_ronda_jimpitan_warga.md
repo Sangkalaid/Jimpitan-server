@@ -1,5 +1,5 @@
 # Product Requirement Document (PRD) & Project Brief
-## Aplikasi Ronda & Jimpitan Warga (RT 01 / RW 02 Kelurahan Bener)
+## Aplikasi Ronda & Jimpitan Warga (RT 01 / RW 02 Dukuh Bener)
 
 **Versi Dokumen:** 1.0.0  
 **Tanggal:** September 2024  
@@ -10,7 +10,7 @@
 
 ## 1. Ringkasan Eksekutif & Latar Belakang (Executive Summary)
 
-Aplikasi **Ronda & Jimpitan Warga** dirancang untuk mendigitalkan dan menertibkan tata kelola keamanan lingkungan malam (ronda/siskamling) serta tradisi pengumpulan kas mikro harian/mingguan (**jimpitan**) di tingkat rukun tetangga, khususnya **RT 01 / RW 02 Kelurahan Bener**.
+Aplikasi **Ronda & Jimpitan Warga** dirancang untuk mendigitalkan dan menertibkan tata kelola keamanan lingkungan malam (ronda/siskamling) serta tradisi pengumpulan kas mikro harian/mingguan (**jimpitan**) di tingkat rukun tetangga, khususnya **RT 01 / RW 02 Dukuh Bener**.
 
 Selama ini, proses pencatatan kehadiran petugas ronda malam, verifikasi iuran jimpitan koin per rumah, dan pengawasan rute patroli masih mengandalkan buku catatan fisik manual yang rentan hilang, rusak, atau kurang transparan. Aplikasi ini hadir sebagai solusi terpadu mobile-first yang mudah digunakan oleh seluruh lapisan warga, mulai dari pemuda hingga warga lansia, serta pengurus RT.
 
@@ -45,7 +45,7 @@ Selama ini, proses pencatatan kehadiran petugas ronda malam, verifikasi iuran ji
 ## 4. Arsitektur Informasi & Spesifikasi Layar (Screen Specifications)
 
 ### 4.1 Layar 1: Opening / Splash Screen Beranimasi
-- **Fungsi:** Pembuka aplikasi dengan identitas visual khas Kelurahan Bener RT 01.
+- **Fungsi:** Pembuka aplikasi dengan identitas visual khas Dukuh Bener RT 01.
 - **Elemen:**
   - Animasi senter visual & radar patroli malam.
   - Progres inisialisasi sistem (`role="progressbar"` dan dukungan `prefers-reduced-motion`).
@@ -124,3 +124,4 @@ Selama ini, proses pencatatan kehadiran petugas ronda malam, verifikasi iuran ji
 - **Fase 1 (Selesai):** Pembuatan Design System, High-Fidelity UI Screens (Opening, Login, Dashboard Warga, Dashboard Pengurus, Verifikasi Pendaftaran, Peta Rute Patroli), serta Audit Aksesibilitas WCAG.
 - **Fase 2 (Berikutnya):** Integrasi backend API notifikasi WhatsApp gateway (konfirmasi otomatis warga baru dan rekap laporan posko).
 - **Fase 3:** Fitur Panic Button / Kentongan Darurat (SOS) dengan peringatan suara pos kamling dan live broadcast ke seluruh perangkat warga RT 01.
+

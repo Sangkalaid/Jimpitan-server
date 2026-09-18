@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Aplikasi Ronda &amp; Jimpitan Warga - RT 01 / RW 02 Kelurahan Bener</title>
+  <title>Aplikasi Ronda &amp; Jimpitan Warga - Dukuh Bener RT 01 / RW 02</title>
 
   <!-- Google Fonts: Plus Jakarta Sans & Inter -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -150,7 +150,7 @@
           </div>
         </div>
         <h1 class="text-xl font-extrabold tracking-tight text-white drop-shadow-sm">APLIKASI RONDA</h1>
-        <p class="text-xs font-semibold text-sky-100 mt-0.5">Bener, RT 01 / RW 02</p>
+        <p class="text-xs font-semibold text-sky-100 mt-0.5">Dukuh Bener RT 01 / RW 02</p>
       </div>
     </header>
 
@@ -249,7 +249,7 @@
   <!-- ================= LAYAR 3: DASHBOARD RONDA & JIMPITAN WARGA ================= -->
   <section class="app-screen relative w-full max-w-[390px] min-h-screen bg-[#f8faff] shadow-2xl flex flex-col pb-28 overflow-x-hidden hidden" id="screenDashboard">
     <!-- TOP HEADER SECTION -->
-    <header class="bg-gradient-to-b from-[#1872b9] via-[#1b7bc9] to-[#2587d6] text-white pt-2.5 pb-20 px-5 rounded-b-[2.5rem] shadow-sm relative">
+    <header class="dashboard-header bg-gradient-to-b from-[#1872b9] via-[#1b7bc9] to-[#2587d6] text-white pt-2.5 pb-20 px-5 rounded-b-[2.5rem] shadow-sm relative">
       <!-- iOS Status Bar Simulation -->
       <div class="flex justify-between items-center text-xs font-medium tracking-tight pt-1 pb-3 text-white/95">
         <span class="text-xs font-bold tracking-tight text-white drop-shadow-sm live-status-time" id="liveStatusBarClock">23:45</span>
@@ -277,10 +277,10 @@
           </div>
           <div>
             <div class="flex items-center gap-1">
-              <h1 class="text-[15px] font-extrabold tracking-wide uppercase leading-tight text-white drop-shadow-sm" id="headerProfileName">Pengguna</h1>
+              <h1 class="text-[14px] font-extrabold uppercase leading-tight text-white drop-shadow-sm max-w-[190px] truncate" id="headerProfileName">Pengguna</h1>
               <span class="material-symbols-outlined text-sm text-white/80">expand_more</span>
             </div>
-            <p class="text-[11px] font-bold tracking-wider text-sky-100" id="headerProfileRole">KETUA RT 01 • PENGURUS</p>
+            <p class="text-[10px] font-bold text-sky-100 leading-tight" id="headerProfileRole">Pengurus RT</p>
             <span class="inline-flex items-center gap-1 text-[9.5px] font-bold text-sky-200 mt-0.5 bg-black/15 px-2 py-0.5 rounded-full border border-white/20" id="cloudStatusPill">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" id="cloudStatusDot"></span>
               <span id="cloudStatusText">Memuat data</span>
@@ -311,7 +311,7 @@
             <!-- PASANG CARD -->
             <button class="flex flex-col justify-between items-center text-center p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 hover:border-emerald-400 active:scale-95 transition-transform duration-150 group shadow-xs focus:outline-none" onclick="openStatDetail('pasang')" type="button">
               <div class="flex items-center justify-between w-full">
-                <span class="text-[11px] font-black text-emerald-950 uppercase tracking-tight">Rumah Terpasang</span>
+                <span class="text-[11px] font-black text-emerald-950 uppercase tracking-tight">Pasang</span>
                 <span class="w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
                   <i class="ph-bold ph-check text-[11px]"></i>
                 </span>
@@ -325,7 +325,7 @@
             <!-- KOSONG CARD -->
             <button class="flex flex-col justify-between items-center text-center p-3 rounded-2xl bg-rose-50/80 border border-rose-200 hover:border-rose-400 active:scale-95 transition-transform duration-150 group shadow-xs focus:outline-none" onclick="openStatDetail('kosong')" type="button">
               <div class="flex items-center justify-between w-full">
-                <span class="text-[11px] font-black text-rose-950 uppercase tracking-tight">Rumah Kosong</span>
+                <span class="text-[11px] font-black text-rose-950 uppercase tracking-tight">Kosong</span>
                 <span class="w-5 h-5 rounded-md bg-rose-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
                   <i class="ph-bold ph-x text-[11px]"></i>
                 </span>
@@ -339,7 +339,7 @@
             <!-- LUNAS CARD -->
             <button class="flex flex-col justify-between items-center text-center p-3 rounded-2xl bg-sky-50/80 border border-sky-200 hover:border-sky-400 active:scale-95 transition-transform duration-150 group shadow-xs focus:outline-none" onclick="openStatDetail('lunas')" type="button">
               <div class="flex items-center justify-between w-full">
-                <span class="text-[11px] font-black text-sky-950 uppercase tracking-tight">Rumah Lunas</span>
+                <span class="text-[11px] font-black text-sky-950 uppercase tracking-tight">Lunas</span>
                 <span class="w-5 h-5 rounded-md bg-sky-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
                   <i class="ph-fill ph-seal-check text-[11px]"></i>
                 </span>
@@ -356,7 +356,7 @@
       <!-- 2. QUICK ACCESS ACTION SHORTCUTS -->
       <section aria-label="Menu Akses Cepat" class="relative">
         <div class="relative flex items-center">
-          <button class="absolute -left-2 z-10 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 active:scale-95 transition-transform duration-150" onclick="document.getElementById('quickMenuSlider').scrollBy({left: -140, behavior: 'smooth'})" type="button">
+          <button class="quick-nav-button absolute -left-2 z-10 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 active:scale-95 transition-transform duration-150" onclick="document.getElementById('quickMenuSlider').scrollBy({left: -140, behavior: 'smooth'})" type="button">
             <span class="material-symbols-outlined text-base leading-none">chevron_left</span>
           </button>
           
@@ -412,7 +412,7 @@
             </button>
           </div>
 
-          <button class="absolute -right-2 z-10 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 active:scale-95 transition-transform duration-150" onclick="document.getElementById('quickMenuSlider').scrollBy({left: 140, behavior: 'smooth'})" type="button">
+          <button class="quick-nav-button absolute -right-2 z-10 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 active:scale-95 transition-transform duration-150" onclick="document.getElementById('quickMenuSlider').scrollBy({left: 140, behavior: 'smooth'})" type="button">
             <span class="material-symbols-outlined text-base leading-none">chevron_right</span>
           </button>
         </div>
@@ -454,14 +454,14 @@
             <div class="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-2.5 flex items-center gap-2">
               <span class="material-symbols-outlined text-slate-500 text-lg">check_circle</span>
               <div>
-                <div class="text-[10px] text-slate-600 font-bold">Rumah Lunas</div>
+                <div class="text-[10px] text-slate-600 font-bold">Lunas</div>
                 <div class="text-xs font-black text-slate-800" id="statusTerambilVal">0 Rumah (Rp 0)</div>
               </div>
             </div>
             <div class="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-2.5 flex items-center gap-2" id="statusSisaBox">
               <span class="material-symbols-outlined text-slate-500 text-lg" id="statusSisaIcon">pending</span>
               <div>
-                <div class="text-[10px] text-slate-600 font-bold" id="statusSisaLabel">Belum Lunas</div>
+                <div class="text-[10px] text-slate-600 font-bold" id="statusSisaLabel">Belum</div>
                 <div class="text-xs font-black text-slate-800" id="statusSisaVal">0 Rumah Sisa</div>
               </div>
             </div>
@@ -716,7 +716,7 @@
               <h2 class="text-xs font-black text-slate-800 uppercase tracking-tight">VERIFIKASI WARGA BARU</h2>
               <span class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold px-2 py-0.5 rounded-full text-center" id="pendingVerifBadge">0 Menunggu</span>
             </div>
-            <p class="text-[10px] text-slate-500 font-semibold mt-0.5">RT 01 / RW 02 Desa Bener</p>
+            <p class="text-[10px] text-slate-500 font-semibold mt-0.5">Dukuh Bener RT 01 / RW 02</p>
           </div>
         </div>
         <button class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center font-bold text-lg transition-transform duration-150 active:scale-95 focus:outline-none flex-shrink-0" onclick="closeVerifAkunModal()" title="Tutup Modal" type="button">✕</button>
@@ -939,7 +939,7 @@
           </div>
           <div>
             <h2 class="text-xs font-black text-slate-800 uppercase">Rekapitulasi Jimpitan</h2>
-            <p class="text-[10px] text-slate-500 font-semibold">RT 01 / RW 02 Desa Bener</p>
+            <p class="text-[10px] text-slate-500 font-semibold">Dukuh Bener RT 01 / RW 02</p>
           </div>
         </div>
         <button class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center font-bold text-lg active:scale-95 transition-transform duration-150 focus:outline-none" onclick="closeRekapModal()" type="button">✕</button>
@@ -1000,7 +1000,7 @@
 
       <h3 class="text-base font-extrabold text-slate-900 mt-2" id="profileModalName">Pengguna</h3>
       <p class="text-xs font-bold text-brand-600" id="profileModalRole">Ketua RT 01 • Pengurus Lingkungan</p>
-      <p class="text-[11px] text-slate-500 mt-0.5">RT 01 / RW 02 • Kelurahan Bener</p>
+      <p class="text-[11px] text-slate-500 mt-0.5">Dukuh Bener RT 01 / RW 02</p>
 
       <div class="w-full mt-5 pt-2 space-y-2">
         
@@ -1054,7 +1054,7 @@
 
   <div id="operationalPanel" class="fixed inset-0 bg-slate-900/60 z-[110] hidden items-end justify-center" onclick="handleBackdropClick(event,'operationalPanel')"><div class="sheet-modal bg-white w-full p-5 rounded-t-2xl" onclick="event.stopPropagation()"><div class="flex justify-between items-center gap-3"><h2 id="operationalTitle" class="font-bold"></h2><button class="ronda-button ronda-secondary" aria-label="Tutup" onclick="closeModalById('operationalPanel')"><span class="material-symbols-outlined">close</span></button></div><div id="operationalBody"></div></div></div>
 
-  <div id="biometricSetup" class="fixed inset-0 bg-slate-900/60 z-[100] hidden items-end justify-center"><div class="sheet-modal bg-white w-full p-5 rounded-t-2xl"><h2 class="font-bold">Aktifkan Login Sidik Jari?</h2><div class="ronda-actions"><button id="enableBiometric" class="ronda-button" onclick="enableBiometric()">Ya</button><button class="ronda-button ronda-secondary" onclick="skipBiometric()">Nanti</button></div></div></div>
+  <div id="biometricSetup" class="fixed inset-0 bg-slate-900/60 z-[100] hidden items-end justify-center"><div class="sheet-modal bg-white w-full p-5 rounded-t-2xl"><h2 class="font-bold">Masukkan Sidik Jari</h2><p class="text-xs text-slate-600 mt-1">Aktifkan sidik jari agar masuk berikutnya lebih aman.</p><div class="ronda-actions"><button id="enableBiometric" class="ronda-button" onclick="enableBiometric()">Aktifkan</button><button class="ronda-button ronda-secondary" onclick="skipBiometric()">Nanti</button></div></div></div>
   <script src="app-config.js"></script>
   <script src="app.js"></script>
   <script src="operations.js"></script>

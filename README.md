@@ -1,5 +1,5 @@
 # Aplikasi Ronda & Jimpitan Warga RT 01 / RW 02
-Kelurahan Bener
+Dukuh Bener
 
 Aplikasi Web Progressive (PWA) untuk monitoring dan pencatatan kegiatan ronda malam, rekapitulasi dana jimpitan warga, jadwal regu ronda, dan pelaporan otomatis berbasis web & cloud.
 
@@ -41,3 +41,4 @@ Aplikasi Web Progressive (PWA) untuk monitoring dan pencatatan kegiatan ronda ma
 - Izin lokasi baru diminta saat pencatatan GPS digunakan; izin notifikasi saat notifikasi pertama dikirim.
 - Wrapper Android hanya memberi bridge native kepada halaman aplikasi lokal dan membuka tautan luar di aplikasi browser terkait.
 - Autentikasi pengurus dan kebijakan Row Level Security Supabase tetap harus dikonfigurasi di backend sebelum dipakai dengan data warga sungguhan. Jangan gunakan PIN contoh atau kebijakan tabel publik untuk produksi.
+

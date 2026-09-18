@@ -1,7 +1,7 @@
 {
   "name": "Aplikasi Ronda & Jimpitan RT 01",
   "short_name": "Ronda RT 01",
-  "description": "Sistem Informasi Ronda Malam & Jimpitan Warga RT 01 / RW 02 Kelurahan Bener",
+  "description": "Sistem Informasi Ronda Malam & Jimpitan Warga Dukuh Bener RT 01 / RW 02",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

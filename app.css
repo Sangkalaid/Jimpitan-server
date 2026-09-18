@@ -4,6 +4,10 @@ html, body { min-height: 100%; overflow-x: hidden; }
 body { padding: 0; align-items: flex-start; }
 .app-screen { min-height: 100dvh !important; height: auto !important; max-height: none !important; max-width: 560px !important; }
 .app-screen > header { padding-top: max(16px, env(safe-area-inset-top)); }
+.dashboard-header { padding-bottom: 76px !important; }
+.dashboard-header button { max-width: 100%; }
+.dashboard-header #cloudStatusPill { max-width: 170px; white-space: nowrap; overflow: hidden; }
+.dashboard-header #cloudStatusText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-screen > header > div:first-child:has(.live-status-time) { display: none; }
 .sheet-modal { max-height: calc(100dvh - env(safe-area-inset-top) - 12px) !important; overflow-y: auto; overscroll-behavior: contain; padding-bottom: max(20px, var(--safe-bottom)) !important; max-width: 560px !important; }
 .fixed.inset-0 { padding-top: env(safe-area-inset-top); }
@@ -21,7 +25,8 @@ nav.fixed { padding-bottom: max(12px, var(--safe-bottom)); max-width: 560px !imp
 .ronda-row { padding: 12px 0; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
 .ronda-row p { margin: 4px 0; }
 .ronda-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.ronda-button { padding: 10px 14px; min-height: 44px; background: #1872b9; color: white; border-radius: 8px; font-weight: 700; font-size: 12px; }
+.ronda-button { padding: 10px 14px; min-height: 40px; background: #1872b9; color: white; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; line-height: 1.1; }
+.ronda-button.compact { min-height: 34px; padding: 8px 10px; font-size: 11px; border-radius: 8px; }
 .ronda-secondary { background: #e2e8f0; color: #1e293b; }
 .ronda-danger { background: #be123c; }
 .ronda-field { display: block; width: 100%; border: 1px solid #cbd5e1; padding: 12px; margin: 6px 0 14px; border-radius: 8px; background: white; font-size: 14px; }
@@ -31,9 +36,23 @@ nav.fixed { padding-bottom: max(12px, var(--safe-bottom)); max-width: 560px !imp
 #googleMap { flex: 1; min-height: 240px; width: 100%; }
 #mapStatus { padding: 8px 0; font-size: 12px; }
 #globalToast { max-width: calc(100vw - 24px); top: max(16px, env(safe-area-inset-top)); z-index: 200; }
+[aria-label="Status Jimpitan"] > button { min-height: 112px; border-radius: 18px; padding: 10px !important; overflow: hidden; }
+[aria-label="Status Jimpitan"] > button > div:first-child { min-height: 22px; align-items: center; gap: 4px; }
+[aria-label="Status Jimpitan"] > button span { white-space: nowrap; }
+.quick-nav-button { top: 50%; transform: translateY(-50%); }
+.quick-nav-button:active { transform: translateY(-50%) scale(.95); }
+.quick-nav-button .material-symbols-outlined { display: block; line-height: 1; height: 1em; }
+#verifPendingListContainer .ronda-actions { align-items: center; }
+#verifPendingListContainer .ronda-row strong,
+#verifPendingListContainer .ronda-row p { overflow-wrap: anywhere; }
+#biometricSetup .sheet-modal { max-width: 390px !important; border-radius: 18px 18px 0 0; }
 @media (max-width: 360px) {
   #screenDashboard main { padding-left: 10px; padding-right: 10px; }
   [aria-label="Status Jimpitan"] { gap: 6px; }
   [aria-label="Status Jimpitan"] > button { padding: 8px; }
   [aria-label="Status Jimpitan"] > button > div:first-child { flex-wrap: wrap; gap: 4px; }
+  .dashboard-header { padding-left: 14px !important; padding-right: 14px !important; }
+  .dashboard-header #headerProfileAvatar { width: 42px; height: 42px; }
+  .dashboard-header #headerProfileName { max-width: 150px; font-size: 13px; }
+  .dashboard-header #cloudStatusPill { max-width: 145px; }
 }

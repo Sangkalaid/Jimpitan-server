@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ronda-rt01-v3.0.0';
+const CACHE_NAME = 'ronda-rt01-v3.0.2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

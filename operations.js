@@ -31,12 +31,12 @@ function renderDashboard() {
   const stats=getDashboardStats();
   $('cardValPasang').textContent=stats.pasang; $('cardValKosong').textContent=stats.kosong; $('cardValLunas').textContent=stats.lunas;
   $('cardSubKosong').textContent='Lihat daftar'; $('cardSubLunas').textContent='Lihat daftar';
-  $('progressTitle').textContent=stats.total?'Pencatatan Jimpitan Hari Ini':'Belum Ada Titik Jimpitan';
+  $('progressTitle').textContent=stats.total?'Jimpitan Hari Ini':'Belum Ada Titik';
   $('statusProgressBadge').textContent=stats.lunas===stats.pasang && stats.pasang>0?'Lunas':'Berjalan';
-  $('subtextSummary').textContent=`${stats.lunas} dari ${stats.pasang} rumah terpasang sudah lunas`;
+  $('subtextSummary').textContent=`${stats.lunas}/${stats.pasang} pasang sudah lunas`;
   $('barFill').style.width=(stats.pasang?stats.lunas/stats.pasang*100:0)+'%';
-  $('statusTerambilVal').textContent=`${stats.lunas} Rumah (${money(dashboardTotal)})`;
-  $('statusSisaVal').textContent=`${stats.pasang-stats.lunas} Belum Lunas`;
+  $('statusTerambilVal').textContent=`${stats.lunas} (${money(dashboardTotal)})`;
+  $('statusSisaVal').textContent=`${stats.pasang-stats.lunas} belum`;
   $('shiftScheduleTitle').textContent=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
   renderSelectOptions(); renderMapMarkers();
 }
@@ -48,14 +48,14 @@ function renderSelectOptions() {
   }
 }
 function openStatDetail(type) {
-  const titles={pasang:'Rumah Terpasang',kosong:'Rumah Kosong',lunas:'Rumah Lunas'};
+  const titles={pasang:'Pasang',kosong:'Kosong',lunas:'Lunas'};
   const list=houseData.filter(h=>type==='kosong'?!h.occupied:type==='lunas'?h.occupied&&h.paid:h.occupied);
-  openPanel(titles[type],list.map(h=>`<div class="ronda-row"><strong>${escapeHtml(h.name)}</strong><p>${escapeHtml(h.description)}</p><p>${h.occupied?(h.paid?'Lunas':'Belum Lunas'):'Kosong'}</p></div>`).join('') || '<p class="ronda-empty">Belum ada rumah dalam kategori ini.</p>');
+  openPanel(titles[type],list.map(h=>`<div class="ronda-row"><strong>${escapeHtml(h.name)}</strong><p>${escapeHtml(h.description)}</p><p>${h.occupied?(h.paid?'Lunas':'Belum'):'Kosong'}</p></div>`).join('') || '<p class="ronda-empty">Belum ada rumah dalam kategori ini.</p>');
 }
 function closeStatDetail() { closeModalById('operationalPanel'); }
 function switchProgressState(state) {
   const list=houseData.filter(h=>h.occupied && (state==='complete'?h.paid:!h.paid));
-  openPanel(state==='complete'?'Rumah Lunas':'Belum Lunas',list.map(h=>`<div class="ronda-row">${escapeHtml(h.name)}</div>`).join('') || '<p class="ronda-empty">Tidak ada rumah dalam kategori ini.</p>');
+  openPanel(state==='complete'?'Lunas':'Belum',list.map(h=>`<div class="ronda-row">${escapeHtml(h.name)}</div>`).join('') || '<p class="ronda-empty">Tidak ada rumah dalam kategori ini.</p>');
 }
 function openPanel(title,body) {
   $('operationalTitle').textContent=title; $('operationalBody').innerHTML=body; openModalById('operationalPanel');
@@ -64,7 +64,7 @@ function openJimpitanModal() { renderSelectOptions(); onSelectGpsHouseChange(); 
 function closeJimpitanModal() { closeModalById('jimpitanModal'); }
 function onSelectGpsHouseChange() {
   const p=houseData.find(h=>h.id===$('selectGpsHouse').value);
-  $('gpsSelectedHouseMeta').textContent=p?`${p.name} / ${p.occupied?'Terpasang':'Kosong'}`:'Pilih titik yang sedang dikunjungi.';
+  $('gpsSelectedHouseMeta').textContent=p?`${p.name} / ${p.occupied?'Pasang':'Kosong'}`:'Pilih titik yang sedang dikunjungi.';
 }
 function getLocation() {
   return new Promise((resolve,reject)=>{
@@ -124,7 +124,7 @@ async function switchRekapTab(period) {
     lastReport=report;
     $('rekapTotalUangVal').textContent=money(report.amount);
     $('rekapPeriodBadge').textContent=`${report.start} - ${report.end}`;
-    $('rekapRateSub').textContent=report.started?`${report.transactions} catatan tersimpan / ${report.complete?'Periode selesai':'Periode berjalan'}`:'Belum ada pencatatan';
+    $('rekapRateSub').textContent=report.started?`${report.transactions} catatan`:'Belum ada catatan';
     $('rekapPasangRumah').textContent=report.pasang+' Rumah'; $('rekapKosongRumah').textContent=report.kosong+' Rumah';
   } catch(e) { if(request===reportRequest) { $('rekapTotalUangVal').textContent='Belum tersedia'; showToast(e.message,false); } }
 }
@@ -132,7 +132,8 @@ async function openShareReportModal() { if(!lastReport) await switchRekapTab('ha
 function closeShareReportModal() { closeModalById('shareReportModal'); }
 function generateReportMessage() {
   if(!lastReport) return '';
-  return `Rekap Jimpitan RT 01 / RW 02\n${lastReport.start} - ${lastReport.end}\nTercatat sampai ${lastReport.through}\nTotal ${money(lastReport.amount)}\n${lastReport.transactions} catatan tersimpan\n${lastReport.complete?'Periode selesai':'Periode berjalan'}`;
+  const stats=getDashboardStats();
+  return `Rekap Jimpitan Dukuh Bener RT 01 / RW 02\n${localDay()}\nTotal ${money(lastReport.amount)}\nPasang: ${stats.pasang}\nTidak Pasang: ${stats.kosong}\nLunas: ${stats.lunas}\nCatatan: ${lastReport.transactions}`;
 }
 async function copyReportText() { await runAction(null,async()=>{await navigator.clipboard.writeText(generateReportMessage()); showToast('Laporan disalin.');}); }
 function shareReportToWhatsApp() { const text=generateReportMessage(); if(!text) return showToast('Buka rekap terlebih dahulu.',false); if(window.AndroidBridge?.shareReport) window.AndroidBridge.shareReport(text); else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener'); }

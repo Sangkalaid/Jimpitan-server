@@ -184,7 +184,15 @@ async function openRouteMapModal() {
     if(location) { if(userMarker) userMarker.remove(); userMarker=L.circleMarker(center,{radius:7,fillColor:'#1872b9',fillOpacity:1,color:'white',weight:2}).bindTooltip('Lokasi Anda').addTo(map); $('mapStatus').textContent=`Akurasi ${Math.round(location.accuracy)} m`; }
   } catch(e) { $('mapStatus').textContent=e.message; }
 }
-function closeRouteMapModal() { closeModalById('routeMapModal'); }
+function stopRouteRecording(saveLabel=true) {
+  if(routeWatch!==null) {
+    navigator.geolocation.clearWatch(routeWatch);
+    routeWatch=null;
+  }
+  if(saveLabel && recordedRoute && !recordedRoute.ended_at) recordedRoute.ended_at=new Date().toISOString();
+  if($('routeRecord')) $('routeRecord').textContent=recordedRoute?.ended_at?'Simpan Rute':'Rekam Rute';
+}
+function closeRouteMapModal() { stopRouteRecording(); closeModalById('routeMapModal'); }
 function renderMapMarkers() {
   if(!map) return;
   mapMarkers.forEach(m=>m.remove());
@@ -209,7 +217,7 @@ async function savePoint(event) {
 async function deletePoint(id) { if(!confirm('Hapus titik dari peta? Riwayat pencatatan tetap disimpan.')) return; await runAction(null,async()=>{await api('point_delete',{id}); await fetchSupabaseData(); closeModalById('operationalPanel');}); }
 async function toggleRoute() {
   if(!isAdmin()) return;
-  if(routeWatch!==null) { navigator.geolocation.clearWatch(routeWatch); routeWatch=null; recordedRoute.ended_at=new Date().toISOString(); }
+  if(routeWatch!==null) { stopRouteRecording(); }
   if(recordedRoute?.ended_at) {
     await runAction($('routeRecord'),async()=>{
       if(recordedRoute.path.length<2) { recordedRoute=null; $('routeRecord').textContent='Rekam Rute'; throw new Error('Rute belum cukup panjang untuk disimpan.'); }
@@ -236,4 +244,4 @@ async function showRoutes() {
     document.querySelectorAll('[data-route]').forEach(button=>button.onclick=async()=>{const r=routes.find(x=>x.id===button.dataset.route); closeModalById('operationalPanel'); await openRouteMapModal(); if(map) { if(routeLine) routeLine.remove(); routeLine=L.polyline(r.path.map(p=>[p.lat,p.lng]),{color:'#1872b9',weight:4}).addTo(map); map.fitBounds(routeLine.getBounds()); }});
   });
 }
-window.addEventListener('pagehide',()=>{if(routeWatch!==null) navigator.geolocation.clearWatch(routeWatch);});
+window.addEventListener('pagehide',()=>stopRouteRecording(false));

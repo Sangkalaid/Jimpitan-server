@@ -111,11 +111,13 @@ async function handleLoginSubmit(event) {
 }
 async function handleLogout() {
   return runAction(null,async()=>{
+    if (typeof stopRouteRecording === 'function') stopRouteRecording(false);
     await api('logout',{},true);
     clearActiveSession(); showToast('Anda telah keluar dari akun.');
   });
 }
 async function switchAccount() {
+  if (typeof stopRouteRecording === 'function') stopRouteRecording(false);
   if(currentUser) { try { await api('logout',{},true); } catch(e) { showToast(e.message,false); return; } }
   clearActiveSession(); renderPersonalLogin(true);
 }

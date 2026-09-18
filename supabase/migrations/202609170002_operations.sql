@@ -43,6 +43,7 @@ create table ronda.routes (
 );
 create table ronda.settings (
  singleton boolean primary key default true check(singleton), started_on date,
+ legacy_org_id uuid, legacy_scope text not null default 'HSE-RT01-%',
  radius_m integer not null default 50 check(radius_m between 10 and 200),
  max_accuracy_m integer not null default 30 check(max_accuracy_m between 1 and 100),
  daily_amount integer not null default 500 check(daily_amount>0)
@@ -53,24 +54,55 @@ create index on ronda.requests(day,status);
 create index on ronda.complaints(account_id,created_at);
 create index on ronda.replies(complaint_id,created_at);
 
--- Preserve the original house ID mapping. Never invent geographical coordinates.
+-- Preserve the original RT01 house ID mapping. Never invent geographical coordinates.
 do $$ begin
- if to_regclass('public.houses') is not null then
-   insert into ronda.points(legacy_id,name,description,occupied)
-   select j->>'id',left(coalesce(nullif(j->>'nama_warga',''),nullif(j->>'name',''),'Rumah'),120),
-     concat_ws(' / ',j->>'no_rumah',j->>'gang'),coalesce(j->>'status_jimpitan','pasang')<>'kosong'
-   from (select to_jsonb(h) j from public.houses h) src on conflict(legacy_id) do nothing;
-   revoke all on public.houses from anon,authenticated;
+ if to_regclass('public.houses') is not null and exists(
+   select 1 from information_schema.columns where table_schema='public' and table_name='houses' and column_name='house_id'
+ ) then
+   insert into ronda.points(id,legacy_id,name,description,occupied)
+   select (j->>'id')::uuid,j->>'id',
+     left(concat_ws(' ',nullif(j->>'house_id',''),nullif(j->>'house_no','')),120),
+     left(coalesce(nullif(j->>'address',''),'Rumah RT01'),1000),
+     coalesce((j->>'is_active')::boolean,true)
+   from (select to_jsonb(h) j from public.houses h) src
+   where coalesce(j->>'house_id','') like 'HSE-RT01-%' and (j->>'id') ~* '^[0-9a-f-]{36}$'
+   on conflict(legacy_id) do update set
+     name=excluded.name,description=excluded.description,occupied=excluded.occupied,updated_at=now();
+   update ronda.settings s set legacy_org_id=(
+     select (to_jsonb(h)->>'org_id')::uuid from public.houses h
+     where to_jsonb(h)->>'house_id' like s.legacy_scope limit 1
+   ) where s.legacy_org_id is null;
  end if;
- if to_regclass('public.jimpitan_transactions') is not null then
-   revoke all on public.jimpitan_transactions from anon,authenticated;
- end if;
+end $$;
+
+create function ronda.legacy_records(p_from date,p_to date)
+returns table(day date,point_id uuid,amount integer,status text)
+language plpgsql stable security definer set search_path=pg_catalog,ronda,public as $$
+declare q text; has_ledger boolean; cfg ronda.settings;
+begin
+ select * into cfg from ronda.settings where singleton;
+ if cfg.legacy_org_id is null then return; end if;
+ has_ledger:=to_regclass('public.jimpitan_transactions') is not null
+   and to_regclass('public.transaction_events') is not null
+   and to_regclass('public.houses') is not null;
+ if not has_ledger then return; end if;
+ q:=$sql$
+   select (t.server_timestamp at time zone 'Asia/Jakarta')::date as day,h.id as point_id,
+     t.nominal::integer as amount,case when t.nominal>0 then 'pasang' else 'kosong' end as status
+   from public.jimpitan_transactions t
+   join public.transaction_events e on e.transaction_id=t.id and e.event_type='FINALIZED'
+   join public.houses h on h.id=t.house_id and h.org_id=t.org_id
+   where t.org_id=$1 and coalesce(h.house_id,'') like $2
+     and (t.server_timestamp at time zone 'Asia/Jakarta')::date between $3 and $4
+ $sql$;
+ return query execute q using cfg.legacy_org_id,cfg.legacy_scope,p_from,p_to;
 end $$;
 
 create function ronda.snapshot(p_day date) returns jsonb language sql stable set search_path=pg_catalog,ronda as $$
  select coalesce(jsonb_agg(to_jsonb(p) || jsonb_build_object('paid',p.occupied and
    (exists(select 1 from ronda.checkins c where c.point_id=p.id and c.day=p_day and c.status='pasang') or
-    exists(select 1 from ronda.requests r where r.point_id=p.id and r.day=p_day and r.status='approved')))
+    exists(select 1 from ronda.requests r where r.point_id=p.id and r.day=p_day and r.status='approved') or
+    exists(select 1 from ronda.legacy_records(p_day,p_day) l where l.point_id=p.id and l.amount>0)))
    order by p.created_at),'[]'::jsonb) from ronda.points p where not p.deleted
 $$;
 create function public.ronda_data(p_action text,p_data jsonb default '{}',p_token text default '')
@@ -93,7 +125,8 @@ begin
  if p_action='dashboard' then
    return jsonb_build_object('points',ronda.snapshot(v_day),'settings',to_jsonb(cfg),
      'total',coalesce((select sum(amount) from ronda.checkins where day=v_day),0)+
-       coalesce((select sum(amount) from ronda.requests where day=v_day and status='approved'),0));
+       coalesce((select sum(amount) from ronda.requests where day=v_day and status='approved'),0)+
+       coalesce((select sum(amount) from ronda.legacy_records(v_day,v_day)),0));
  elsif p_action='point_save' then
    if not v_admin then return jsonb_build_object('error','FORBIDDEN'); end if;
    v_lat:=(p_data->>'latitude')::double precision; v_lng:=(p_data->>'longitude')::double precision;
@@ -176,7 +209,8 @@ begin
    select jsonb_build_object('amount',coalesce(sum(amount),0),'transactions',count(*),
      'pasang',count(distinct point_id) filter(where amount>0),'kosong',count(distinct point_id) filter(where status='kosong')) into v_result
      from (select point_id,amount,status from ronda.checkins where day between v_start and least(v_day,v_end)
-       union all select point_id,amount,'pasang' from ronda.requests where status='approved' and day between v_start and least(v_day,v_end)) final_records;
+       union all select point_id,amount,'pasang' from ronda.requests where status='approved' and day between v_start and least(v_day,v_end)
+       union all select point_id,amount,status from ronda.legacy_records(v_start,least(v_day,v_end))) final_records;
    return v_result||jsonb_build_object('start',v_start,'end',v_end,'through',least(v_day,v_end),'complete',v_day>v_end,'started',cfg.started_on is not null);
  elsif p_action='complaint_create' then
    v_body:=trim(coalesce(p_data->>'body',''));

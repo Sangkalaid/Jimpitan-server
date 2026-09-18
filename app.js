@@ -195,10 +195,17 @@ async function openVerifAkunModal() {
 function closeVerifAkunModal() { closeModalById('verifAkunModal'); }
 function renderVerifPendingList() {
   $('pendingVerifBadge').textContent=pendingVerifList.filter(x=>x.status==='pending').length+' Menunggu';
-  $('verifPendingListContainer').innerHTML=pendingVerifList.map(a=>`<div class="ronda-row"><strong>${escapeHtml(a.name)}</strong><p>${escapeHtml(a.phone)} / ${escapeHtml(a.status)}</p><div class="ronda-actions">${a.status==='pending'?`<button class="ronda-button" onclick="handleVerifDecision('${a.id}',true)">Setujui</button><button class="ronda-button ronda-danger" onclick="handleVerifDecision('${a.id}',false)">Tolak</button>`:''}${currentUser.role==='master' && a.status==='approved' && a.role!=='master'?`<label class="ronda-label">Hak akses<select class="ronda-field" onchange="changeRole('${a.id}',this.value)">${['warga','pengurus','admin'].map(role=>`<option ${a.role===role?'selected':''}>${role}</option>`).join('')}</select></label>`:''}</div></div>`).join('') || '<p class="ronda-empty">Belum ada pendaftaran.</p>';
+  $('verifPendingListContainer').innerHTML=pendingVerifList.map(a=>{
+    const canDelete=a.id!==currentUser.id && a.role!=='master';
+    return `<div class="ronda-row"><strong>${escapeHtml(a.name)}</strong><p>${escapeHtml(a.phone)} / ${escapeHtml(a.status)}</p><div class="ronda-actions">${a.status==='pending'?`<button class="ronda-button" onclick="handleVerifDecision('${a.id}',true)">Setujui</button><button class="ronda-button ronda-danger" onclick="handleVerifDecision('${a.id}',false)">Tolak</button>`:''}${currentUser.role==='master' && a.status==='approved' && a.role!=='master'?`<label class="ronda-label">Hak akses<select class="ronda-field" onchange="changeRole('${a.id}',this.value)">${['warga','pengurus','admin'].map(role=>`<option ${a.role===role?'selected':''}>${role}</option>`).join('')}</select></label>`:''}${canDelete?`<button class="ronda-button ronda-danger" onclick="deleteAccount('${a.id}','${escapeHtml(a.name)}')">Hapus Akun</button>`:''}</div></div>`;
+  }).join('') || '<p class="ronda-empty">Belum ada pendaftaran.</p>';
 }
 async function handleVerifDecision(id,approved) { await runAction(null,async()=>{await api('verify',{id,status:approved?'approved':'rejected'},true); await openVerifAkunModal();}); }
 async function changeRole(id,role) { await runAction(null,async()=>{await api('role',{id,role},true); await openVerifAkunModal();}); }
+async function deleteAccount(id,name) {
+  if(!confirm(`Hapus akun ${name}? Akun akan keluar dari semua perangkat dan tidak muncul lagi di daftar.`)) return;
+  await runAction(null,async()=>{await api('account_delete',{id},true); showToast('Akun berhasil dihapus.'); await openVerifAkunModal();});
+}
 function openUtilitasModal() { openModalById('utilitasModal'); }
 function closeUtilitasModal() { closeModalById('utilitasModal'); }
 document.addEventListener('DOMContentLoaded',async()=>{

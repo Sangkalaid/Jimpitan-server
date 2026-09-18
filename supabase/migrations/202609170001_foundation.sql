@@ -6,7 +6,7 @@ revoke all on schema ronda from public, anon, authenticated;
 
 create table ronda.accounts (
   id uuid primary key default gen_random_uuid(),
-  phone text not null unique check (phone ~ '^62[0-9]{8,13}$'),
+  phone text not null unique check (phone ~ '^62[0-9]{8,13}$' or phone ~ '^deleted-[0-9a-f-]{36}$'),
   name text not null check (length(name) between 3 and 120),
   pin_hash text not null,
   role text not null default 'warga' check (role in ('warga','pengurus','admin','master')),
@@ -15,6 +15,7 @@ create table ronda.accounts (
   device_hash text,
   failed_attempts integer not null default 0,
   locked_until timestamptz,
+  deleted_at timestamptz,
   created_at timestamptz not null default now()
 );
 create table ronda.sessions (
@@ -43,7 +44,7 @@ values ('6285877672699','Master Admin',extensions.crypt('123456',extensions.gen_
 create function ronda.profile(a ronda.accounts) returns jsonb
 language sql stable set search_path = pg_catalog as $$
  select jsonb_build_object('id',a.id,'phone',a.phone,'name',a.name,'role',a.role,
- 'status',a.status,'avatar',a.avatar,'created_at',a.created_at)
+ 'status',a.status,'avatar',a.avatar,'created_at',a.created_at,'deleted_at',a.deleted_at)
 $$;
 
 create function public.ronda_auth(p_action text, p_data jsonb default '{}', p_token text default '')
@@ -71,7 +72,7 @@ begin
 
  if p_action in ('login','biometric_login') then
    if p_action = 'login' then
-     select * into a from ronda.accounts where phone=v_phone for update;
+     select * into a from ronda.accounts where phone=v_phone and deleted_at is null for update;
      if a.id is null then return jsonb_build_object('error','UNREGISTERED'); end if;
      if a.locked_until > now() then return jsonb_build_object('error','LOCKED'); end if;
      if coalesce(p_data->>'pin','') !~ '^[0-9]{6}$' or
@@ -85,7 +86,7 @@ begin
    else
      select ac.* into a from ronda.accounts ac join ronda.biometric_keys b on b.account_id=ac.id
        where b.token_hash=encode(extensions.digest(coalesce(p_data->>'credential',''),'sha256'),'hex')
-       and b.device_hash=v_device and b.expires_at>now() for update of ac;
+       and b.device_hash=v_device and b.expires_at>now() and ac.deleted_at is null for update of ac;
      if a.id is null then return jsonb_build_object('error','SESSION'); end if;
    end if;
    if a.status <> 'approved' then return jsonb_build_object('error','PENDING'); end if;
@@ -107,7 +108,8 @@ begin
 
  select * into s from ronda.sessions where token_hash=encode(extensions.digest(p_token,'sha256'),'hex')
    and expires_at>now() and device_hash=v_device;
- select * into a from ronda.accounts where id=s.account_id and status='approved' and device_hash=v_device for update;
+ select * into a from ronda.accounts where id=s.account_id and status='approved' and device_hash=v_device
+   and deleted_at is null for update;
  if a.id is null then return jsonb_build_object('error','SESSION'); end if;
  if p_action='session' then return jsonb_build_object('account',ronda.profile(a));
  elsif p_action='logout' then
@@ -131,8 +133,8 @@ begin
  elsif p_action='accounts' then
    if a.role='warga' then return jsonb_build_object('error','FORBIDDEN'); end if;
    return jsonb_build_object('accounts',coalesce((select jsonb_agg(ronda.profile(x) order by x.created_at desc)
-     from ronda.accounts x),'[]'::jsonb));
- elsif p_action in ('verify','role') then
+     from ronda.accounts x where x.deleted_at is null),'[]'::jsonb));
+ elsif p_action in ('verify','role','account_delete') then
    if a.role='warga' or (p_action='role' and a.role<>'master') then
      return jsonb_build_object('error','FORBIDDEN');
    end if;
@@ -144,11 +146,26 @@ begin
      if p_data->>'status' not in ('approved','rejected') then return jsonb_build_object('error','INPUT'); end if;
      update ronda.accounts set status=p_data->>'status' where id=v_target.id;
      delete from ronda.sessions where account_id=v_target.id;
-   else
+   elsif p_action='role' then
      if v_target.status<>'approved' or p_data->>'role' not in ('warga','pengurus','admin') then
        return jsonb_build_object('error','INPUT');
      end if;
      update ronda.accounts set role=p_data->>'role' where id=v_target.id;
+   else
+     delete from ronda.sessions where account_id=v_target.id;
+     delete from ronda.biometric_keys where account_id=v_target.id;
+     delete from ronda.teams where account_id=v_target.id;
+     update ronda.accounts set
+       phone='deleted-'||v_target.id::text,
+       name='Akun dihapus',
+       role='warga',
+       status='rejected',
+       avatar=null,
+       device_hash=null,
+       failed_attempts=0,
+       locked_until=null,
+       deleted_at=now()
+     where id=v_target.id;
    end if;
    insert into ronda.audit(account_id,action) values(a.id,p_action||':'||v_target.id::text);
  else return jsonb_build_object('error','INPUT');

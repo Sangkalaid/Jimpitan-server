@@ -70,6 +70,16 @@ test('server authentication, authorization and operational integrity',async t=>{
    assert.equal((await call('biometric_login',{credential},'',true,other)).error,'SESSION');
    assert.equal((await call('biometric_login',{credential},'',true)).account.id,user.account.id);
   });
+  await t.test('admin can delete registered accounts without deleting history',async()=>{
+   user=await call('login',{phone:'081234567890',pin:'654321'},'',true);
+   assert.equal((await call('account_delete',{id:admin.account.id},user.token,true)).error,'FORBIDDEN');
+   assert.equal((await call('account_delete',{id:admin.account.id},admin.token,true)).error,'FORBIDDEN');
+   assert.equal((await call('account_delete',{id:user.account.id},admin.token,true)).ok,true);
+   assert.equal((await call('login',{phone:'081234567890',pin:'654321'},'',true)).error,'UNREGISTERED');
+   assert.equal((await call('register',{phone:'081234567890',pin:'111111',name:'Warga Baru'},'',true)).status,'pending');
+   const accounts=await call('accounts',{},admin.token,true);
+   assert.equal(accounts.accounts.some(a=>a.id===user.account.id),false);
+  });
   await t.test('anonymous role cannot read private tables',async()=>{
    await db.exec('set role anon');
    await assert.rejects(db.query('select * from ronda.accounts'),/permission denied/);

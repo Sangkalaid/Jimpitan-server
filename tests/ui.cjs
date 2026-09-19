@@ -41,6 +41,37 @@ async function checkViewport(browser, name, viewport) {
   await page.close();
 }
 
+async function checkSecurityGate(browser) {
+  const page = await browser.newPage({viewport: {width: 390, height: 844}});
+  await page.addInitScript(() => {
+    localStorage.setItem('ronda_session', 'stored-session-token');
+    localStorage.setItem('ronda_last_account', JSON.stringify({
+      id: 'last-account',
+      name: 'Ilham',
+      phone: '6281234567890',
+      biometric: false
+    }));
+  });
+  await page.goto(baseUrl, {waitUntil: 'networkidle'});
+  await page.waitForSelector('#screenLogin', {state: 'visible'});
+  assert.ok(await page.locator('#screenDashboard').evaluate(el => el.classList.contains('hidden')));
+  assert.equal(await page.locator('#loginSubheading').textContent(), 'Ilham');
+  await page.close();
+}
+
+async function checkDisplayNameCleanup(browser) {
+  const page = await browser.newPage({viewport: {width: 390, height: 844}});
+  await page.goto(baseUrl, {waitUntil: 'networkidle'});
+  const names = await page.evaluate(() => [
+    displayPointName({name: 'HSE-RT01-10 01', description: 'Ilham'}),
+    displayPointName({name: 'HSE-RT01-02 02', description: 'Rumah Bu Sari'}),
+    markerPopup({id:'p1', name:'HSE-RT-01 01', description:'Pak Budi', status_today:'belum', paid:false})
+  ]);
+  assert.deepEqual(names.slice(0, 2), ['Ilham', 'Rumah Bu Sari']);
+  assert.equal(names[2].includes('HSE'), false);
+  await page.close();
+}
+
 (async () => {
   const server = spawn(process.execPath, ['scripts/serve.cjs'], {
     cwd: process.cwd(),
@@ -53,6 +84,8 @@ async function checkViewport(browser, name, viewport) {
     try {
       await checkViewport(browser, 'desktop', {width: 390, height: 844});
       await checkViewport(browser, 'mobile', {width: 360, height: 740, isMobile: true});
+      await checkSecurityGate(browser);
+      await checkDisplayNameCleanup(browser);
     } finally {
       await browser.close();
     }

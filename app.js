@@ -26,7 +26,9 @@ const messages = {
   DISTANCE:'Anda belum berada dalam radius titik jimpitan.', ACCURACY:'Lokasi belum cukup akurat. Coba lagi di tempat terbuka.',
   DUPLICATE:'Titik ini sudah dicatat pada tanggal tersebut.', MAP_POINT:'Titik belum memiliki lokasi. Hubungi pengurus RT.'
 };
-const isAdmin = () => currentUser && ['master','admin','pengurus'].includes(currentUser.role);
+const normalizeRole = role => String(role || '').toLowerCase().replace(/[-\s]+/g,'_');
+const isMaster = user => ['master','master_admin'].includes(normalizeRole(user?.role));
+const isAdmin = () => currentUser && ['master','master_admin','admin','pengurus'].includes(normalizeRole(currentUser.role));
 function storeSession(token) {
   sessionToken = token || '';
   if (window.AndroidBridge?.writeSession) { window.AndroidBridge.writeSession(sessionToken); localStorage.removeItem('ronda_session'); }
@@ -253,8 +255,8 @@ async function renderVerifPendingList() {
   const resets=await api('pin_reset_list',{},true).catch(()=>({requests:[]}));
   const resetHtml=(resets.requests||[]).map(r=>`<div class="ronda-row reset-row"><strong>Reset PIN: ${escapeHtml(r.name)}</strong><p>${escapeHtml(r.phone)} / ${escapeHtml(r.status)}</p>${r.status==='pending'?`<div class="ronda-actions"><button class="ronda-button compact" onclick="reviewPinReset('${r.id}','approved')">Setujui</button><button class="ronda-button ronda-danger compact" onclick="reviewPinReset('${r.id}','rejected')">Tolak</button></div>`:'<p class="text-xs text-emerald-700 font-bold">Disetujui, menunggu warga membuat PIN baru.</p>'}</div>`).join('');
   const accountHtml=pendingVerifList.map(a=>{
-    const canDelete=a.id!==currentUser.id && a.role!=='master';
-    return `<div class="ronda-row"><strong>${escapeHtml(a.name)}</strong><p>${escapeHtml(a.phone)} / ${escapeHtml(a.status)}</p><div class="ronda-actions">${a.status==='pending'?`<button class="ronda-button compact" onclick="handleVerifDecision('${a.id}',true)">Setujui</button><button class="ronda-button ronda-danger compact" onclick="handleVerifDecision('${a.id}',false)">Tolak</button>`:''}${currentUser.role==='master' && a.status==='approved' && a.role!=='master'?`<label class="ronda-label">Akses<select class="ronda-field" onchange="changeRole('${a.id}',this.value)">${['warga','pengurus','admin'].map(role=>`<option ${a.role===role?'selected':''}>${role}</option>`).join('')}</select></label>`:''}${canDelete?`<button class="ronda-button ronda-danger compact" onclick="deleteAccount('${a.id}','${escapeHtml(a.name)}')">Hapus</button>`:''}</div></div>`;
+    const canDelete=a.id!==currentUser.id && !isMaster(a);
+    return `<div class="ronda-row"><strong>${escapeHtml(a.name)}</strong><p>${escapeHtml(a.phone)} / ${escapeHtml(a.status)}</p><div class="ronda-actions">${a.status==='pending'?`<button class="ronda-button compact" onclick="handleVerifDecision('${a.id}',true)">Setujui</button><button class="ronda-button ronda-danger compact" onclick="handleVerifDecision('${a.id}',false)">Tolak</button>`:''}${isMaster(currentUser) && a.status==='approved' && !isMaster(a)?`<label class="ronda-label">Akses<select class="ronda-field" onchange="changeRole('${a.id}',this.value)">${['warga','pengurus','admin'].map(role=>`<option ${a.role===role?'selected':''}>${role}</option>`).join('')}</select></label>`:''}${canDelete?`<button class="ronda-button ronda-danger compact" onclick="deleteAccount('${a.id}','${escapeHtml(a.name)}')">Hapus</button>`:''}</div></div>`;
   }).join('');
   $('verifPendingListContainer').innerHTML=resetHtml+accountHtml || '<p class="ronda-empty">Belum ada pendaftaran atau reset PIN.</p>';
 }
@@ -282,12 +284,10 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(sessionToken) {
     if(lastAccount?.biometric && window.AndroidBridge?.unlockBiometric) {
       handleBiometricLogin();
-      return;
+    } else {
+      $('btnLoginSubmit').disabled=false;
+      showToast('Silakan masuk kembali dengan PIN.');
     }
-    $('btnLoginSubmit').disabled=true;
-    try { const result=await api('session',{},true); currentUser=result.account; updateHistory(); enterDashboard(); }
-    catch(e) { console.warn('[Session]',e); if(e.code==='SESSION') storeSession(''); showToast(e.message,false); }
-    finally { $('btnLoginSubmit').disabled=false; }
   }
   setInterval(()=>{ if(currentUser && !document.hidden) fetchSupabaseData(); },30000);
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('[Offline shell]',e));

@@ -13,12 +13,17 @@ let routeLine=null;
 function localDay(date=new Date()) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
 function moveQuickMenu(direction) {
   const slider=$('quickMenuSlider');
-  slider.scrollBy({left:direction*Math.max(140,slider.clientWidth*.55),behavior:'smooth'});
-  setTimeout(updateQuickMenuIndicator,260);
+  if(!slider) return;
+  const max=Math.max(0,slider.scrollWidth-slider.clientWidth);
+  const target=Math.min(max,Math.max(0,slider.scrollLeft + direction*Math.max(160,slider.clientWidth*.72)));
+  slider.scrollTo({left:target,behavior:'smooth'});
+  setTimeout(updateQuickMenuIndicator,120);
+  setTimeout(updateQuickMenuIndicator,360);
 }
 function updateQuickMenuIndicator() {
   const slider=$('quickMenuSlider'); if(!slider) return;
-  const second=slider.scrollLeft > (slider.scrollWidth-slider.clientWidth)/2;
+  const max=Math.max(1,slider.scrollWidth-slider.clientWidth);
+  const second=slider.scrollLeft / max >= .45;
   $('quickDot1')?.classList.toggle('w-6',!second); $('quickDot1')?.classList.toggle('w-2',second);
   $('quickDot1')?.classList.toggle('bg-brand-500',!second); $('quickDot1')?.classList.toggle('bg-slate-300',second);
   $('quickDot2')?.classList.toggle('w-6',second); $('quickDot2')?.classList.toggle('w-2',!second);
@@ -60,7 +65,7 @@ function renderDashboard() {
 function renderSelectOptions() {
   for(const id of ['selectTargetRumah','selectGpsHouse']) {
     const select=$(id); const previous=select.value;
-    select.innerHTML='<option value="">Pilih titik jimpitan</option>'+houseData.filter(h=>id==='selectGpsHouse'||h.occupied).map(h=>`<option value="${h.id}">${escapeHtml(h.name)}</option>`).join('');
+    select.innerHTML='<option value="">Pilih titik jimpitan</option>'+houseData.filter(h=>id==='selectGpsHouse'||h.occupied).map(h=>`<option value="${h.id}">${escapeHtml(displayPointName(h))}</option>`).join('');
     if(houseData.some(h=>h.id===previous)) select.value=previous;
   }
 }
@@ -80,21 +85,32 @@ function updateDetectedBadge() {
 function closeStatDetail() { closeModalById('operationalPanel'); }
 function switchProgressState(state) {
   const list=houseData.filter(h=>h.occupied && (state==='complete'?h.paid:!h.paid));
-  openPanel(state==='complete'?'Lunas':'Belum',list.map(h=>`<div class="ronda-row">${escapeHtml(h.name)}</div>`).join('') || '<p class="ronda-empty">Tidak ada rumah dalam kategori ini.</p>');
+  openPanel(state==='complete'?'Lunas':'Belum',list.map(h=>`<div class="ronda-row">${escapeHtml(displayPointName(h))}</div>`).join('') || '<p class="ronda-empty">Tidak ada rumah dalam kategori ini.</p>');
 }
 function renderPointList(list,type) {
   const palette=['soft-blue','soft-green','soft-cream','soft-slate'];
   return list.map((h,i)=>{
     const status=type==='lunas'?'Lunas':h.status_today==='kosong'?'Tidak Pasang':h.paid?'Lunas':h.status_today==='pasang'?'Pasang':'Belum Diambil';
     const cls=status==='Lunas'?'chip-green':status==='Tidak Pasang'?'chip-red':status==='Belum Diambil'?'chip-amber':'chip-blue';
-    return `<div class="point-row ${palette[i%palette.length]}"><div><strong>${escapeHtml(cleanPointName(h.name))}</strong><p>Dukuh Bener RT 01 / RW 02</p></div><span class="status-chip ${cls}">${status}</span></div>`;
+    return `<div class="point-row ${palette[i%palette.length]}"><div><strong>${escapeHtml(displayPointName(h))}</strong><p>Dukuh Bener RT 01 / RW 02</p></div><span class="status-chip ${cls}">${status}</span></div>`;
   }).join('');
 }
 function emptyPointState(type) {
   if(type==='kosong') return '<div class="ronda-empty"><strong>Belum ada rumah kosong</strong><p>Semua rumah sudah terpasang jimpitan pada wilayah RT 01 / RW 02.</p></div>';
   return '<p class="ronda-empty">Belum ada data.</p>';
 }
-function cleanPointName(name='') { return String(name).replace(/^HSE[-\w]*\s*/i,'').trim() || 'Rumah Warga'; }
+function cleanPointName(name='') {
+  let text=String(name || '').trim();
+  text=text.replace(/^HSE(?:[-_\s]*(?:RT|RW)?\d+[A-Z]?)+\s*/i,'');
+  text=text.replace(/^HSE[-_\s\w]*\s*/i,'');
+  text=text.replace(/^(?:RT|RW)\s*0?\d+[\s/-]*/i,'');
+  text=text.replace(/^[\d\s._/-]+/,'').trim();
+  return /^[\d\s._/-]*$/.test(text)?'':text;
+}
+function displayPointName(point) {
+  if(typeof point==='string') return cleanPointName(point) || 'Rumah Warga';
+  return cleanPointName(point?.name) || cleanPointName(point?.description) || 'Rumah Warga';
+}
 function openPanel(title,body,subtitle='') {
   $('operationalTitle').textContent=title; $('operationalBody').innerHTML=(subtitle?`<p class="panel-subtitle">${escapeHtml(subtitle)}</p>`:'')+body; openModalById('operationalPanel');
 }
@@ -102,7 +118,7 @@ function openJimpitanModal() { renderSelectOptions(); onSelectGpsHouseChange(); 
 function closeJimpitanModal() { closeModalById('jimpitanModal'); }
 function onSelectGpsHouseChange() {
   const p=houseData.find(h=>h.id===$('selectGpsHouse').value);
-  $('gpsSelectedHouseMeta').textContent=p?`${p.name} / ${p.occupied?'Pasang':'Kosong'}`:'Pilih titik yang sedang dikunjungi.';
+  $('gpsSelectedHouseMeta').textContent=p?`${displayPointName(p)} / ${p.occupied?'Pasang':'Kosong'}`:'Pilih titik yang sedang dikunjungi.';
 }
 function getLocation() {
   return new Promise((resolve,reject)=>{
@@ -143,7 +159,7 @@ async function submitPengajuan(event) {
 async function renderRequests() {
   await runAction(null,async()=>{
     const result=await api('requests');
-    $('requestList').innerHTML=result.requests.map(r=>`<div class="ronda-row"><strong>${escapeHtml(r.point_name)}</strong><p>${escapeHtml(r.name)} / ${money(r.amount)}</p><p>${escapeHtml(r.status)}</p>${isAdmin()&&r.status==='pending'?`<div class="ronda-actions"><button class="ronda-button" onclick="reviewRequest('${r.id}','approved')">Setujui</button><button class="ronda-button ronda-danger" onclick="reviewRequest('${r.id}','rejected')">Tolak</button></div>`:''}</div>`).join('') || '<p class="ronda-empty">Belum ada pengajuan.</p>';
+    $('requestList').innerHTML=result.requests.map(r=>`<div class="ronda-row"><strong>${escapeHtml(displayPointName(r.point_name))}</strong><p>${escapeHtml(r.name)} / ${money(r.amount)}</p><p>${escapeHtml(r.status)}</p>${isAdmin()&&r.status==='pending'?`<div class="ronda-actions"><button class="ronda-button" onclick="reviewRequest('${r.id}','approved')">Setujui</button><button class="ronda-button ronda-danger" onclick="reviewRequest('${r.id}','rejected')">Tolak</button></div>`:''}</div>`).join('') || '<p class="ronda-empty">Belum ada pengajuan.</p>';
   });
 }
 async function reviewRequest(id,status) { if(!confirm('Simpan keputusan pengajuan ini?')) return; await runAction(null,async()=>{await api('request_review',{id,status}); await renderRequests(); await fetchSupabaseData();}); }
@@ -244,8 +260,8 @@ function renderMapMarkers() {
   if(!map) return;
   mapMarkers.forEach(m=>m.remove());
   mapMarkers=houseData.filter(p=>p.latitude!==null&&p.longitude!==null).map(p=>{
-    const marker=L.marker([p.latitude,p.longitude],{title:p.name,icon:pointIcon(p)}).addTo(map);
-    marker.bindPopup(markerPopup(p),{maxWidth:260});
+    const marker=L.marker([p.latitude,p.longitude],{title:displayPointName(p),icon:pointIcon(p)}).addTo(map);
+    marker.bindPopup(markerPopup(p),{maxWidth:300,className:'ronda-leaflet-popup'});
     marker.on('click',()=>{});
     return marker;
   });
@@ -257,11 +273,12 @@ function pointIcon(p) {
 }
 function markerPopup(p) {
   const status=pointStatus(p), label={lunas:'Lunas',pasang:'Pasang',kosong:'Tidak Pasang',belum:'Belum Diambil'}[status];
-  return `<div class="marker-popup"><strong>${escapeHtml(cleanPointName(p.name))}</strong><p>Dukuh Bener RT 01 / RW 02</p><span class="status-chip chip-${status==='kosong'?'red':status==='belum'?'amber':status==='lunas'?'green':'blue'}">${label}</span><div class="ronda-actions">${isAdmin()?`<button class="ronda-button compact" onclick="editPoint('${p.id}')">Edit</button>`:''}<button class="ronda-button compact ronda-secondary" onclick="showToast('Scan barcode dibuka dari marker peta.')">Scan Barcode</button><button class="ronda-button compact" onclick="prepareMapCheckin('${p.id}','pasang')">Pasang</button><button class="ronda-button compact ronda-danger" onclick="prepareMapCheckin('${p.id}','kosong')">Tidak Pasang</button></div></div>`;
+  const chip=status==='kosong'?'red':status==='belum'?'amber':status==='lunas'?'green':'blue';
+  return `<div class="marker-popup marker-card"><div class="marker-card-head"><div><strong>${escapeHtml(displayPointName(p))}</strong><p>Dukuh Bener RT 01 / RW 02</p></div><span class="status-chip chip-${chip}">${label}</span></div><div class="marker-actions">${isAdmin()?`<button class="ronda-button compact ronda-secondary" onclick="editPoint('${p.id}')">Edit</button>`:''}<button class="ronda-button compact ronda-secondary" onclick="showToast('Scan barcode dibuka dari marker peta.')">Scan Barcode</button><button class="ronda-button compact" onclick="prepareMapCheckin('${p.id}','pasang')">Pasang</button><button class="ronda-button compact ronda-danger" onclick="prepareMapCheckin('${p.id}','kosong')">Tidak Pasang</button></div></div>`;
 }
 function prepareMapCheckin(id,status) { closeRouteMapModal(); openJimpitanModal(); $('selectGpsHouse').value=id; onSelectGpsHouseChange(); if(status) showToast(status==='pasang'?'Pilih Pasang untuk menyimpan.':'Pilih Kosong untuk menyimpan.'); }
 async function editPoint(id=null) {
-  if(!isAdmin()) return;
+  if(!isAdmin()) return showToast('Fitur peta ini hanya untuk Pengurus RT.',false);
   await runAction(null,async()=>{
     let point=id?houseData.find(p=>p.id===id):null;
     const location=point?.latitude!==null && point?.latitude!==undefined?{latitude:point.latitude,longitude:point.longitude}:await getLocation();
@@ -271,11 +288,12 @@ async function editPoint(id=null) {
 async function relocatePoint(button) { await runAction(button,async()=>{const p=await getLocation(); const f=$('pointForm'); f.elements.latitude.value=p.latitude; f.elements.longitude.value=p.longitude; $('pointPosition').textContent=`${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)}`;}); }
 async function savePoint(event) {
   event.preventDefault(); const f=new FormData(event.target);
+  if(!isAdmin()) return showToast('Fitur peta ini hanya untuk Pengurus RT.',false);
   await runAction(event.submitter,async()=>{await api('point_save',{id:f.get('id')||null,name:f.get('name'),description:f.get('description'),latitude:Number(f.get('latitude')),longitude:Number(f.get('longitude'))}); await fetchSupabaseData(); closeModalById('operationalPanel'); showToast('Titik tersimpan.');});
 }
-async function deletePoint(id) { if(!confirm('Hapus titik dari peta? Riwayat pencatatan tetap disimpan.')) return; await runAction(null,async()=>{await api('point_delete',{id}); await fetchSupabaseData(); closeModalById('operationalPanel');}); }
+async function deletePoint(id) { if(!isAdmin()) return showToast('Fitur peta ini hanya untuk Pengurus RT.',false); if(!confirm('Hapus titik dari peta? Riwayat pencatatan tetap disimpan.')) return; await runAction(null,async()=>{await api('point_delete',{id}); await fetchSupabaseData(); closeModalById('operationalPanel');}); }
 async function toggleRoute() {
-  if(!isAdmin()) return;
+  if(!isAdmin()) return showToast('Fitur rute hanya untuk Pengurus RT.',false);
   if(routeWatch!==null) { stopRouteRecording(); }
   if(recordedRoute?.ended_at) {
     await runAction($('routeRecord'),async()=>{
@@ -297,6 +315,7 @@ async function toggleRoute() {
   });
 }
 async function showRoutes() {
+  if(!isAdmin()) return showToast('Riwayat rute hanya untuk Pengurus RT.',false);
   await runAction(null,async()=>{
     const {routes}=await api('routes');
     openPanel('Riwayat Rute',routes.map(r=>`<div class="ronda-row"><p>${escapeHtml(new Date(r.started_at).toLocaleString('id-ID'))}</p><p>${r.path.length} lokasi</p><button class="ronda-button" data-route="${r.id}">Lihat Rute</button></div>`).join('') || '<p class="ronda-empty">Belum ada rute tersimpan.</p>');

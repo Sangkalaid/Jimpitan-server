@@ -11,6 +11,19 @@ let routeWatch=null;
 let recordedRoute=null;
 let routeLine=null;
 function localDay(date=new Date()) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
+function moveQuickMenu(direction) {
+  const slider=$('quickMenuSlider');
+  slider.scrollBy({left:direction*Math.max(140,slider.clientWidth*.55),behavior:'smooth'});
+  setTimeout(updateQuickMenuIndicator,260);
+}
+function updateQuickMenuIndicator() {
+  const slider=$('quickMenuSlider'); if(!slider) return;
+  const second=slider.scrollLeft > (slider.scrollWidth-slider.clientWidth)/2;
+  $('quickDot1')?.classList.toggle('w-6',!second); $('quickDot1')?.classList.toggle('w-2',second);
+  $('quickDot1')?.classList.toggle('bg-brand-500',!second); $('quickDot1')?.classList.toggle('bg-slate-300',second);
+  $('quickDot2')?.classList.toggle('w-6',second); $('quickDot2')?.classList.toggle('w-2',!second);
+  $('quickDot2')?.classList.toggle('bg-brand-500',second); $('quickDot2')?.classList.toggle('bg-slate-300',!second);
+}
 async function fetchSupabaseData() {
   if(!currentUser || refreshing) return;
   refreshing=true;
@@ -24,19 +37,23 @@ async function fetchSupabaseData() {
 }
 function getDashboardStats() {
   const unique=[...new Map(houseData.map(h=>[h.id,h])).values()];
-  const pasang=unique.filter(h=>h.occupied), kosong=unique.filter(h=>!h.occupied), lunas=pasang.filter(h=>h.paid);
-  return {total:unique.length,pasang:pasang.length,kosong:kosong.length,lunas:lunas.length,totalUang:dashboardTotal};
+  const checked=unique.filter(h=>h.checked_today || h.status_today==='pasang' || h.status_today==='kosong' || h.paid);
+  const pasang=unique.filter(h=>h.status_today==='pasang' || h.paid), kosong=unique.filter(h=>h.status_today==='kosong');
+  const lunas=pasang.filter(h=>h.paid), belum=unique.filter(h=>!checked.some(c=>c.id===h.id));
+  return {total:unique.length,pasang:pasang.length,kosong:kosong.length,lunas:lunas.length,belum:belum.length,checked:checked.length,totalUang:dashboardTotal};
 }
 function renderDashboard() {
   const stats=getDashboardStats();
   $('cardValPasang').textContent=stats.pasang; $('cardValKosong').textContent=stats.kosong; $('cardValLunas').textContent=stats.lunas;
   $('cardSubKosong').textContent='Lihat daftar'; $('cardSubLunas').textContent='Lihat daftar';
   $('progressTitle').textContent=stats.total?'Jimpitan Hari Ini':'Belum Ada Titik';
-  $('statusProgressBadge').textContent=stats.lunas===stats.pasang && stats.pasang>0?'Lunas':'Berjalan';
-  $('subtextSummary').textContent=`${stats.lunas}/${stats.pasang} pasang sudah lunas`;
-  $('barFill').style.width=(stats.pasang?stats.lunas/stats.pasang*100:0)+'%';
-  $('statusTerambilVal').textContent=`${stats.lunas} (${money(dashboardTotal)})`;
-  $('statusSisaVal').textContent=`${stats.pasang-stats.lunas} belum`;
+  const done=stats.total>0 && stats.belum===0;
+  $('statusProgressBadge').textContent=done?'Selesai':'Belum';
+  $('subtextSummary').textContent=done?'Semua rumah sudah diambil':`${stats.checked}/${stats.total} rumah sudah diambil. Masih ada ${stats.belum} rumah yang belum diambil`;
+  $('barFill').style.width=(stats.total?stats.checked/stats.total*100:0)+'%';
+  $('sendReportWrap')?.classList.toggle('hidden',!done);
+  $('pickupMeta')?.classList.toggle('hidden',true);
+  updateDetectedBadge();
   $('shiftScheduleTitle').textContent=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
   renderSelectOptions(); renderMapMarkers();
 }
@@ -49,18 +66,39 @@ function renderSelectOptions() {
 }
 function openStatDetail(type) {
   const titles={pasang:'Pasang',kosong:'Kosong',lunas:'Lunas'};
-  const list=houseData.filter(h=>type==='kosong'?!h.occupied:type==='lunas'?h.occupied&&h.paid:h.occupied);
-  openPanel(titles[type],list.map(h=>`<div class="ronda-row"><strong>${escapeHtml(h.name)}</strong><p>${escapeHtml(h.description)}</p><p>${h.occupied?(h.paid?'Lunas':'Belum'):'Kosong'}</p></div>`).join('') || '<p class="ronda-empty">Belum ada rumah dalam kategori ini.</p>');
+  const list=houseData.filter(h=>type==='kosong'?h.status_today==='kosong':type==='lunas'?h.paid:(h.status_today==='pasang'||h.paid));
+  const subtitles={pasang:`Total ${list.length} rumah terpasang`,kosong:`Total ${list.length} rumah kosong`,lunas:`Total ${list.length} rumah lunas`};
+  openPanel(titles[type],renderPointList(list,type) || emptyPointState(type),subtitles[type]);
+}
+function updateDetectedBadge() {
+  const count=getDashboardStats().belum;
+  const badge=$('gpsDetectedBadge');
+  if(!badge) return;
+  badge.textContent=count>99?'99+':String(count);
+  badge.classList.toggle('hidden',count===0);
 }
 function closeStatDetail() { closeModalById('operationalPanel'); }
 function switchProgressState(state) {
   const list=houseData.filter(h=>h.occupied && (state==='complete'?h.paid:!h.paid));
   openPanel(state==='complete'?'Lunas':'Belum',list.map(h=>`<div class="ronda-row">${escapeHtml(h.name)}</div>`).join('') || '<p class="ronda-empty">Tidak ada rumah dalam kategori ini.</p>');
 }
-function openPanel(title,body) {
-  $('operationalTitle').textContent=title; $('operationalBody').innerHTML=body; openModalById('operationalPanel');
+function renderPointList(list,type) {
+  const palette=['soft-blue','soft-green','soft-cream','soft-slate'];
+  return list.map((h,i)=>{
+    const status=type==='lunas'?'Lunas':h.status_today==='kosong'?'Tidak Pasang':h.paid?'Lunas':h.status_today==='pasang'?'Pasang':'Belum Diambil';
+    const cls=status==='Lunas'?'chip-green':status==='Tidak Pasang'?'chip-red':status==='Belum Diambil'?'chip-amber':'chip-blue';
+    return `<div class="point-row ${palette[i%palette.length]}"><div><strong>${escapeHtml(cleanPointName(h.name))}</strong><p>Dukuh Bener RT 01 / RW 02</p></div><span class="status-chip ${cls}">${status}</span></div>`;
+  }).join('');
 }
-function openJimpitanModal() { renderSelectOptions(); onSelectGpsHouseChange(); openModalById('jimpitanModal'); }
+function emptyPointState(type) {
+  if(type==='kosong') return '<div class="ronda-empty"><strong>Belum ada rumah kosong</strong><p>Semua rumah sudah terpasang jimpitan pada wilayah RT 01 / RW 02.</p></div>';
+  return '<p class="ronda-empty">Belum ada data.</p>';
+}
+function cleanPointName(name='') { return String(name).replace(/^HSE[-\w]*\s*/i,'').trim() || 'Rumah Warga'; }
+function openPanel(title,body,subtitle='') {
+  $('operationalTitle').textContent=title; $('operationalBody').innerHTML=(subtitle?`<p class="panel-subtitle">${escapeHtml(subtitle)}</p>`:'')+body; openModalById('operationalPanel');
+}
+function openJimpitanModal() { renderSelectOptions(); onSelectGpsHouseChange(); $('detectedPointHint').textContent=`${getDashboardStats().belum} titik belum diambil`; openModalById('jimpitanModal'); }
 function closeJimpitanModal() { closeModalById('jimpitanModal'); }
 function onSelectGpsHouseChange() {
   const p=houseData.find(h=>h.id===$('selectGpsHouse').value);
@@ -123,7 +161,7 @@ async function switchRekapTab(period) {
     if(request!==reportRequest) return;
     lastReport=report;
     $('rekapTotalUangVal').textContent=money(report.amount);
-    $('rekapPeriodBadge').textContent=`${report.start} - ${report.end}`;
+    $('rekapPeriodBadge').textContent=formatReportPeriod(period,report);
     $('rekapRateSub').textContent=report.started?`${report.transactions} catatan`:'Belum ada catatan';
     $('rekapPasangRumah').textContent=report.pasang+' Rumah'; $('rekapKosongRumah').textContent=report.kosong+' Rumah';
   } catch(e) { if(request===reportRequest) { $('rekapTotalUangVal').textContent='Belum tersedia'; showToast(e.message,false); } }
@@ -135,6 +173,14 @@ function generateReportMessage() {
   const stats=getDashboardStats();
   return `Rekap Jimpitan Dukuh Bener RT 01 / RW 02\n${localDay()}\nTotal ${money(lastReport.amount)}\nPasang: ${stats.pasang}\nTidak Pasang: ${stats.kosong}\nLunas: ${stats.lunas}\nCatatan: ${lastReport.transactions}`;
 }
+function formatReportPeriod(period,report) {
+  const d=new Date(`${report.through || localDay()}T00:00:00`);
+  if(period==='hari') return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  if(period==='bulan') return d.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+  const week=Math.ceil(d.getDate()/7);
+  const start=new Date(`${report.start}T00:00:00`), end=new Date(`${report.end}T00:00:00`);
+  return `Minggu ke-${week} • ${start.toLocaleDateString('id-ID',{day:'numeric',month:'short'})}-${end.toLocaleDateString('id-ID',{day:'numeric',month:'short'})}`;
+}
 async function copyReportText() { await runAction(null,async()=>{await navigator.clipboard.writeText(generateReportMessage()); showToast('Laporan disalin.');}); }
 function shareReportToWhatsApp() { const text=generateReportMessage(); if(!text) return showToast('Buka rekap terlebih dahulu.',false); if(window.AndroidBridge?.shareReport) window.AndroidBridge.shareReport(text); else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener'); }
 async function openDataReguModal() {
@@ -144,7 +190,7 @@ async function openDataReguModal() {
     $('teamList').innerHTML=DAYS.map((day,i)=>{
       const members=result.teams.filter(t=>t.weekday===i+1);
       if(!isAdmin()&&!members.length) return '';
-      return `<div class="ronda-row"><strong>${day}</strong>${members.map(t=>`<p>${escapeHtml(t.name)} ${isAdmin()?`<button aria-label="Hapus anggota" title="Hapus anggota" class="ronda-button ronda-secondary" onclick="saveTeam('${t.id}',null)"><span class="material-symbols-outlined">person_remove</span></button>`:''}</p>`).join('') || '<p>Belum ada anggota.</p>'}</div>`;
+      return `<div class="team-card soft-${['blue','green','cream','slate'][i%4]}"><div class="team-card-head"><strong>${day}</strong><span>${members.length} anggota</span></div>${members.map(t=>`<div class="team-member"><span>${escapeHtml(t.name)}</span>${isAdmin()?`<button aria-label="Hapus anggota" title="Hapus anggota" class="ronda-button ronda-secondary compact" onclick="saveTeam('${t.id}',null)"><span class="material-symbols-outlined">person_remove</span></button>`:''}</div>`).join('') || '<p class="text-xs text-slate-500 font-bold">Belum ada anggota.</p>'}</div>`;
     }).join('') || '<p class="ronda-empty">Anda belum terdaftar dalam regu.</p>';
     $('teamEditor').classList.toggle('hidden',!isAdmin());
     if(isAdmin()) {
@@ -182,7 +228,7 @@ async function openRouteMapModal() {
         .on('tileerror',()=>{$('mapStatus').textContent='Gambar peta belum dimuat. Periksa koneksi internet.';}).addTo(map);
     } else { map.invalidateSize(); map.setView(center,18); }
     renderMapMarkers();
-    if(location) { if(userMarker) userMarker.remove(); userMarker=L.circleMarker(center,{radius:7,fillColor:'#1872b9',fillOpacity:1,color:'white',weight:2}).bindTooltip('Lokasi Anda').addTo(map); $('mapStatus').textContent=`Akurasi ${Math.round(location.accuracy)} m`; }
+    if(location) { if(userMarker) userMarker.remove(); userMarker=L.circleMarker(center,{radius:7,fillColor:markerColor,fillOpacity:1,color:'white',weight:2}).bindTooltip('Sedang Mengambil').addTo(map); $('mapStatus').textContent=`Akurasi ${Math.round(location.accuracy)} m`; }
   } catch(e) { $('mapStatus').textContent=e.message; }
 }
 function stopRouteRecording(saveLabel=true) {
@@ -198,10 +244,22 @@ function renderMapMarkers() {
   if(!map) return;
   mapMarkers.forEach(m=>m.remove());
   mapMarkers=houseData.filter(p=>p.latitude!==null&&p.longitude!==null).map(p=>{
-    const marker=L.marker([p.latitude,p.longitude],{title:p.name}).addTo(map);
-    marker.on('click',()=>isAdmin()?editPoint(p.id):showToast(p.name)); return marker;
+    const marker=L.marker([p.latitude,p.longitude],{title:p.name,icon:pointIcon(p)}).addTo(map);
+    marker.bindPopup(markerPopup(p),{maxWidth:260});
+    marker.on('click',()=>{});
+    return marker;
   });
 }
+function pointStatus(p) { return p.paid?'lunas':p.status_today==='pasang'?'pasang':p.status_today==='kosong'?'kosong':'belum'; }
+function pointIcon(p) {
+  const status=pointStatus(p), photo=p.avatar?`<img src="${escapeHtml(p.avatar)}" alt="">`:'';
+  return L.divIcon({className:`ronda-map-marker ${status}`,html:`<span class="sonar"></span><div>${photo || '<i></i>'}</div>`,iconSize:[34,34],iconAnchor:[17,17]});
+}
+function markerPopup(p) {
+  const status=pointStatus(p), label={lunas:'Lunas',pasang:'Pasang',kosong:'Tidak Pasang',belum:'Belum Diambil'}[status];
+  return `<div class="marker-popup"><strong>${escapeHtml(cleanPointName(p.name))}</strong><p>Dukuh Bener RT 01 / RW 02</p><span class="status-chip chip-${status==='kosong'?'red':status==='belum'?'amber':status==='lunas'?'green':'blue'}">${label}</span><div class="ronda-actions">${isAdmin()?`<button class="ronda-button compact" onclick="editPoint('${p.id}')">Edit</button>`:''}<button class="ronda-button compact ronda-secondary" onclick="showToast('Scan barcode dibuka dari marker peta.')">Scan Barcode</button><button class="ronda-button compact" onclick="prepareMapCheckin('${p.id}','pasang')">Pasang</button><button class="ronda-button compact ronda-danger" onclick="prepareMapCheckin('${p.id}','kosong')">Tidak Pasang</button></div></div>`;
+}
+function prepareMapCheckin(id,status) { closeRouteMapModal(); openJimpitanModal(); $('selectGpsHouse').value=id; onSelectGpsHouseChange(); if(status) showToast(status==='pasang'?'Pilih Pasang untuk menyimpan.':'Pilih Kosong untuk menyimpan.'); }
 async function editPoint(id=null) {
   if(!isAdmin()) return;
   await runAction(null,async()=>{
@@ -233,7 +291,7 @@ async function toggleRoute() {
       if(pos.coords.accuracy>operationalSettings.max_accuracy_m || recordedRoute.path.length>=10000) return;
       const p={lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy,time:new Date(pos.timestamp).toISOString()};
       recordedRoute.path.push(p);
-      if(map) { if(routeLine) routeLine.remove(); routeLine=L.polyline(recordedRoute.path.map(p=>[p.lat,p.lng]),{color:'#1872b9',weight:4}).addTo(map); }
+      if(map) { if(routeLine) routeLine.remove(); routeLine=L.polyline(recordedRoute.path.map(p=>[p.lat,p.lng]),{color:markerColor,weight:4}).addTo(map); }
       $('mapStatus').textContent=`Merekam ${recordedRoute.path.length} lokasi`;
     },()=>{$('mapStatus').textContent='Lokasi terputus. Periksa GPS perangkat.';},{enableHighAccuracy:true,maximumAge:0,timeout:20000});
   });

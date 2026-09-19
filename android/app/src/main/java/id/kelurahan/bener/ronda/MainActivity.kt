@@ -258,11 +258,7 @@ class MainActivity : AppCompatActivity() {
                 // Check if any sheet modal is open in web view
                 webView.evaluateJavascript(
                     "(function() { " +
-                    "  const openModal = document.querySelector('.fixed.inset-0.flex'); " +
-                    "  if (openModal) { openModal.click(); return true; } " +
-                    "  if (typeof currentScreenId !== 'undefined' && currentScreenId === 'screenDashboard') { " +
-                    "    navigateToScreen('screenLogin'); return true; " +
-                    "  } " +
+                    "  if (typeof window.handleNativeBack === 'function') return window.handleNativeBack(); " +
                     "  return false; " +
                     "})()",
                 ) { result ->

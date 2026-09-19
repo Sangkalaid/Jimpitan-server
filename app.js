@@ -13,6 +13,7 @@ let waitingBiometricSetup = false;
 let sessionToken = window.AndroidBridge?.readSession?.() || localStorage.getItem('ronda_session') || '';
 let lastAccount = readLocalJson('ronda_last_account', null);
 let deviceId = window.AndroidBridge?.deviceId?.() || localStorage.getItem('ronda_device');
+let markerColor = localStorage.getItem('ronda_marker_color') || '#2563eb';
 if (!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem('ronda_device', deviceId); }
 for (const key of ['ronda_current_user','ronda_house_data','ronda_verif_list']) localStorage.removeItem(key);
 const messages = {
@@ -151,9 +152,43 @@ async function handleRegistrationSubmit(event) {
 }
 function handleCheckApprovalStatus() { showToast('Silakan masuk dengan PIN untuk memeriksa status verifikasi.'); closeRegisterModalAndFillLogin(); }
 function closeRegisterModalAndFillLogin() { closeRegisterModal(); renderPersonalLogin(true); $('input-whatsapp').value=$('resSummaryPhone').textContent; }
-function openLupaPinModal() { showToast('Hubungi pengurus RT untuk bantuan pemulihan akun.',false); }
+function openLupaPinModal() { $('forgotPinStart').classList.remove('hidden'); $('forgotPinRequest').classList.add('hidden'); $('forgotPinNew').classList.add('hidden'); openModalById('modalLupaPin'); }
 function closeLupaPinModal() { closeModalById('modalLupaPin'); }
-function applyRecoveredPin() { closeLupaPinModal(); openLupaPinModal(); }
+function applyRecoveredPin() { closeLupaPinModal(); }
+function showForgotRequest() { $('forgotPinStart').classList.add('hidden'); $('forgotPinNew').classList.add('hidden'); $('forgotPinRequest').classList.remove('hidden'); $('forgotPhone').value=$('input-whatsapp').value; setTimeout(()=>$('forgotPhone').focus(),60); }
+function showForgotNewPin(phone='') { $('forgotPinStart').classList.add('hidden'); $('forgotPinRequest').classList.add('hidden'); $('forgotPinNew').classList.remove('hidden'); if(phone) $('resetPhone').value=phone; }
+function resetPinWithBiometric() {
+  if(!lastAccount?.biometric || !window.AndroidBridge?.unlockBiometric) return showToast('Biometrik belum aktif di perangkat ini.',false);
+  window._biometricCredential=credential=>runAction(null,async()=>{
+    if(!credential) throw new Error('Verifikasi biometrik gagal. Silakan coba lagi atau ajukan reset ke Pengurus.');
+    const result=await api('biometric_login',{credential},true);
+    if(result.account.id!==lastAccount.id) throw new Error('Biometrik tidak cocok dengan akun terakhir di perangkat ini.');
+    storeSession(result.token); currentUser=result.account; updateHistory();
+    closeLupaPinModal(); openModalById('modalLupaPin'); showForgotNewPin(lastAccount.phone); $('resetViaBiometric').value=credential;
+  });
+  window.AndroidBridge.unlockBiometric();
+}
+async function requestPinReset(event) {
+  event.preventDefault();
+  await runAction(event.submitter,async()=>{
+    await api('pin_reset_request',{phone:$('forgotPhone').value},true);
+    showToast('Permintaan reset dikirim ke Pengurus RT.');
+    closeLupaPinModal();
+  });
+}
+async function saveNewPin(event) {
+  event.preventDefault();
+  await runAction(event.submitter,async()=>{
+    const pin=$('newPin').value, confirmPin=$('newPinConfirm').value;
+    if(pin!==confirmPin) throw new Error('PIN baru dan konfirmasi harus sama.');
+    if(!/^\d{6}$/.test(pin)) throw new Error('PIN harus 6 angka.');
+    const credential=$('resetViaBiometric').value;
+    if(credential) await api('pin_change_biometric',{credential,pin},true);
+    else await api('pin_reset_complete',{phone:$('resetPhone').value,pin},true);
+    showToast('PIN berhasil diperbarui. Silakan login kembali.');
+    storeSession(''); closeLupaPinModal(); renderPersonalLogin(true);
+  });
+}
 function skipBiometric() {
   lastAccount.biometricAsked=true; localStorage.setItem('ronda_last_account',JSON.stringify(lastAccount));
   closeModalById('biometricSetup');
@@ -185,7 +220,13 @@ function renderIdentity() {
   $('profileModalRole').textContent='RT 01 / RW 02';
   for(const id of ['headerProfileAvatar','profileModalAvatar']) $(id).src=currentUser.avatar || 'icons/icon-192.png';
   document.querySelectorAll('[data-admin]').forEach(el=>el.classList.toggle('hidden',!isAdmin()));
+  document.querySelectorAll('.marker-color-swatch').forEach(el=>el.classList.toggle('selected',rgbToHex(getComputedStyle(el).backgroundColor)===markerColor.toLowerCase()));
 }
+function rgbToHex(rgb) {
+  const m=rgb.match(/\d+/g); if(!m) return rgb;
+  return '#'+m.slice(0,3).map(x=>Number(x).toString(16).padStart(2,'0')).join('');
+}
+function setMarkerColor(color) { markerColor=color; localStorage.setItem('ronda_marker_color',color); renderIdentity(); showToast('Warna marker disimpan.'); }
 function openProfileModal() { if(currentUser) openModalById('profileModal'); }
 function closeProfileModal() { closeModalById('profileModal'); }
 function triggerChangeAvatar() { $('avatarFileInput').click(); }
@@ -204,21 +245,34 @@ async function handleAvatarFileChange(event) {
 async function openVerifAkunModal() {
   if(!isAdmin()) return;
   openModalById('verifAkunModal');
-  await runAction(null,async()=>{ const result=await api('accounts',{},true); pendingVerifList=result.accounts; renderVerifPendingList(); });
+  await runAction(null,async()=>{ const result=await api('accounts',{},true); pendingVerifList=result.accounts; await renderVerifPendingList(); });
 }
 function closeVerifAkunModal() { closeModalById('verifAkunModal'); }
-function renderVerifPendingList() {
+async function renderVerifPendingList() {
   $('pendingVerifBadge').textContent=pendingVerifList.filter(x=>x.status==='pending').length+' Menunggu';
-  $('verifPendingListContainer').innerHTML=pendingVerifList.map(a=>{
+  const resets=await api('pin_reset_list',{},true).catch(()=>({requests:[]}));
+  const resetHtml=(resets.requests||[]).map(r=>`<div class="ronda-row reset-row"><strong>Reset PIN: ${escapeHtml(r.name)}</strong><p>${escapeHtml(r.phone)} / ${escapeHtml(r.status)}</p>${r.status==='pending'?`<div class="ronda-actions"><button class="ronda-button compact" onclick="reviewPinReset('${r.id}','approved')">Setujui</button><button class="ronda-button ronda-danger compact" onclick="reviewPinReset('${r.id}','rejected')">Tolak</button></div>`:'<p class="text-xs text-emerald-700 font-bold">Disetujui, menunggu warga membuat PIN baru.</p>'}</div>`).join('');
+  const accountHtml=pendingVerifList.map(a=>{
     const canDelete=a.id!==currentUser.id && a.role!=='master';
     return `<div class="ronda-row"><strong>${escapeHtml(a.name)}</strong><p>${escapeHtml(a.phone)} / ${escapeHtml(a.status)}</p><div class="ronda-actions">${a.status==='pending'?`<button class="ronda-button compact" onclick="handleVerifDecision('${a.id}',true)">Setujui</button><button class="ronda-button ronda-danger compact" onclick="handleVerifDecision('${a.id}',false)">Tolak</button>`:''}${currentUser.role==='master' && a.status==='approved' && a.role!=='master'?`<label class="ronda-label">Akses<select class="ronda-field" onchange="changeRole('${a.id}',this.value)">${['warga','pengurus','admin'].map(role=>`<option ${a.role===role?'selected':''}>${role}</option>`).join('')}</select></label>`:''}${canDelete?`<button class="ronda-button ronda-danger compact" onclick="deleteAccount('${a.id}','${escapeHtml(a.name)}')">Hapus</button>`:''}</div></div>`;
-  }).join('') || '<p class="ronda-empty">Belum ada pendaftaran.</p>';
+  }).join('');
+  $('verifPendingListContainer').innerHTML=resetHtml+accountHtml || '<p class="ronda-empty">Belum ada pendaftaran atau reset PIN.</p>';
 }
 async function handleVerifDecision(id,approved) { await runAction(null,async()=>{await api('verify',{id,status:approved?'approved':'rejected'},true); await openVerifAkunModal();}); }
 async function changeRole(id,role) { await runAction(null,async()=>{await api('role',{id,role},true); await openVerifAkunModal();}); }
 async function deleteAccount(id,name) {
   if(!confirm(`Hapus akun ${name}? Akun akan keluar dari semua perangkat dan tidak muncul lagi di daftar.`)) return;
   await runAction(null,async()=>{await api('account_delete',{id},true); showToast('Akun berhasil dihapus.'); await openVerifAkunModal();});
+}
+async function reviewPinReset(id,status) { await runAction(null,async()=>{await api('pin_reset_review',{id,status},true); showToast(status==='approved'?'Reset PIN disetujui.':'Reset PIN ditolak.'); await openVerifAkunModal();}); }
+function showExitDialog() { openModalById('exitAppModal'); return true; }
+function closeExitDialog() { closeModalById('exitAppModal'); }
+function confirmExitApp() { if(window.AndroidBridge?.exitApp) window.AndroidBridge.exitApp(); else closeExitDialog(); }
+function handleNativeBack() {
+  const openModal=document.querySelector('.fixed.inset-0.flex');
+  if(openModal) { closeModalById(openModal.id); return true; }
+  if(currentScreenId==='screenDashboard') return showExitDialog();
+  return false;
 }
 function openUtilitasModal() { openModalById('utilitasModal'); }
 function closeUtilitasModal() { closeModalById('utilitasModal'); }

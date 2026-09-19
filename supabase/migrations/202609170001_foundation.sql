@@ -36,6 +36,19 @@ create table ronda.audit (
   action text not null,
   created_at timestamptz not null default now()
 );
+create table ronda.pin_reset_requests (
+  id uuid primary key default gen_random_uuid(),
+  account_id uuid not null references ronda.accounts(id),
+  phone text not null,
+  status text not null default 'pending' check(status in ('pending','approved','rejected','completed')),
+  reset_token_hash text,
+  reviewed_by uuid references ronda.accounts(id),
+  reviewed_at timestamptz,
+  expires_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create unique index pin_reset_one_pending on ronda.pin_reset_requests(account_id) where status='pending';
+create index on ronda.pin_reset_requests(phone,created_at);
 
 -- Old registrations remain archived; no plaintext PIN is copied into the new system.
 insert into ronda.accounts(phone,name,pin_hash,role,status)
@@ -50,7 +63,7 @@ $$;
 create function public.ronda_auth(p_action text, p_data jsonb default '{}', p_token text default '')
 returns jsonb language plpgsql security definer set search_path = pg_catalog, ronda, extensions as $$
 declare
- a ronda.accounts; s ronda.sessions; v_phone text; v_device text; v_token text;
+ a ronda.accounts; s ronda.sessions; v_phone text; v_device text; v_token text; v_reset ronda.pin_reset_requests;
  v_target ronda.accounts;
 begin
  v_phone := regexp_replace(coalesce(p_data->>'phone',''),'[^0-9]','','g');
@@ -106,6 +119,28 @@ begin
    return jsonb_build_object('token',v_token,'account',ronda.profile(a));
  end if;
 
+ if p_action='pin_reset_request' then
+   select * into a from ronda.accounts where phone=v_phone and status='approved' and deleted_at is null;
+   if a.id is null then return jsonb_build_object('error','UNREGISTERED'); end if;
+   if exists(select 1 from ronda.pin_reset_requests where account_id=a.id and status='pending') then
+     return jsonb_build_object('error','DUPLICATE');
+   end if;
+   if exists(select 1 from ronda.pin_reset_requests where account_id=a.id and created_at>now()-interval '3 minutes') then
+     return jsonb_build_object('error','LOCKED');
+   end if;
+   insert into ronda.pin_reset_requests(account_id,phone) values(a.id,a.phone);
+   return jsonb_build_object('status','pending');
+ elsif p_action='pin_reset_complete' then
+   select * into v_reset from ronda.pin_reset_requests
+     where phone=v_phone and status='approved' and expires_at>now() for update;
+   if v_reset.id is null or coalesce(p_data->>'pin','') !~ '^[0-9]{6}$' then return jsonb_build_object('error','INPUT'); end if;
+   update ronda.accounts set pin_hash=extensions.crypt(p_data->>'pin',extensions.gen_salt('bf',12)),failed_attempts=0,locked_until=null
+     where id=v_reset.account_id and status='approved' and deleted_at is null;
+   update ronda.pin_reset_requests set status='completed' where id=v_reset.id;
+   delete from ronda.sessions where account_id=v_reset.account_id;
+   return jsonb_build_object('ok',true);
+ end if;
+
  select * into s from ronda.sessions where token_hash=encode(extensions.digest(p_token,'sha256'),'hex')
    and expires_at>now() and device_hash=v_device;
  select * into a from ronda.accounts where id=s.account_id and status='approved' and device_hash=v_device
@@ -123,6 +158,14 @@ begin
    return jsonb_build_object('credential',v_token);
  elsif p_action='biometric_disable' then
    delete from ronda.biometric_keys where account_id=a.id;
+ elsif p_action='pin_change_biometric' then
+   if coalesce(p_data->>'credential','')='' or coalesce(p_data->>'pin','') !~ '^[0-9]{6}$' then return jsonb_build_object('error','INPUT'); end if;
+   if not exists(select 1 from ronda.biometric_keys b where b.account_id=a.id
+     and b.token_hash=encode(extensions.digest(p_data->>'credential','sha256'),'hex')
+     and b.device_hash=v_device and b.expires_at>now()) then return jsonb_build_object('error','SESSION'); end if;
+   update ronda.accounts set pin_hash=extensions.crypt(p_data->>'pin',extensions.gen_salt('bf',12)),failed_attempts=0,locked_until=null where id=a.id;
+   delete from ronda.sessions where account_id=a.id;
+   delete from ronda.biometric_keys where account_id=a.id;
  elsif p_action='avatar' then
    if length(coalesce(p_data->>'avatar',''))>300000 or
       coalesce(p_data->>'avatar','') !~ '^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$' then
@@ -134,6 +177,19 @@ begin
    if a.role='warga' then return jsonb_build_object('error','FORBIDDEN'); end if;
    return jsonb_build_object('accounts',coalesce((select jsonb_agg(ronda.profile(x) order by x.created_at desc)
      from ronda.accounts x where x.deleted_at is null),'[]'::jsonb));
+ elsif p_action='pin_reset_list' then
+   if a.role='warga' then return jsonb_build_object('error','FORBIDDEN'); end if;
+   return jsonb_build_object('requests',coalesce((select jsonb_agg(jsonb_build_object('id',r.id,'phone',r.phone,'status',r.status,'created_at',r.created_at,'name',x.name) order by r.created_at desc)
+     from ronda.pin_reset_requests r join ronda.accounts x on x.id=r.account_id where r.status in ('pending','approved')),'[]'::jsonb));
+ elsif p_action='pin_reset_review' then
+   if a.role='warga' then return jsonb_build_object('error','FORBIDDEN'); end if;
+   select * into v_reset from ronda.pin_reset_requests where id=(p_data->>'id')::uuid and status='pending' for update;
+   if v_reset.id is null or p_data->>'status' not in ('approved','rejected') then return jsonb_build_object('error','INPUT'); end if;
+   update ronda.pin_reset_requests set status=p_data->>'status',reviewed_by=a.id,reviewed_at=now(),
+     reset_token_hash=null,
+     expires_at=case when p_data->>'status'='approved' then now()+interval '30 minutes' else null end
+     where id=v_reset.id;
+   return jsonb_build_object('ok',true,'phone',v_reset.phone);
  elsif p_action in ('verify','role','account_delete') then
    if a.role='warga' or (p_action='role' and a.role<>'master') then
      return jsonb_build_object('error','FORBIDDEN');
@@ -177,6 +233,7 @@ alter table ronda.accounts enable row level security;
 alter table ronda.sessions enable row level security;
 alter table ronda.biometric_keys enable row level security;
 alter table ronda.audit enable row level security;
+alter table ronda.pin_reset_requests enable row level security;
 revoke all on all tables in schema ronda from public,anon,authenticated;
 revoke all on all functions in schema ronda from public,anon,authenticated;
 revoke all on function public.ronda_auth(text,jsonb,text) from public;

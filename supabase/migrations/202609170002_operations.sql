@@ -99,11 +99,18 @@ begin
 end $$;
 
 create function ronda.snapshot(p_day date) returns jsonb language sql stable set search_path=pg_catalog,ronda as $$
- select coalesce(jsonb_agg(to_jsonb(p) || jsonb_build_object('paid',p.occupied and
-   (exists(select 1 from ronda.checkins c where c.point_id=p.id and c.day=p_day and c.status='pasang') or
-    exists(select 1 from ronda.requests r where r.point_id=p.id and r.day=p_day and r.status='approved') or
-    exists(select 1 from ronda.legacy_records(p_day,p_day) l where l.point_id=p.id and l.amount>0)))
-   order by p.created_at),'[]'::jsonb) from ronda.points p where not p.deleted
+ with day_records as (
+   select point_id, amount, status from ronda.checkins where day=p_day
+   union all select point_id, amount, 'pasang' from ronda.requests where day=p_day and status='approved'
+   union all select point_id, amount, status from ronda.legacy_records(p_day,p_day)
+ ), per_point as (
+   select p.*,
+     exists(select 1 from day_records d where d.point_id=p.id) as checked_today,
+     coalesce((select case when sum(amount)>0 then 'pasang' when count(*)>0 then 'kosong' end from day_records d where d.point_id=p.id),'belum') as status_today,
+     exists(select 1 from day_records d where d.point_id=p.id and d.amount>0) as paid
+   from ronda.points p where not p.deleted
+ )
+ select coalesce(jsonb_agg(to_jsonb(per_point) order by created_at),'[]'::jsonb) from per_point
 $$;
 create function public.ronda_data(p_action text,p_data jsonb default '{}',p_token text default '')
 returns jsonb language plpgsql security definer set search_path=pg_catalog,ronda,extensions as $$
@@ -207,7 +214,8 @@ begin
      when 'bulan' then (v_start+interval '1 month'-interval '1 day')::date else v_day end;
    v_start:=greatest(v_start,coalesce(cfg.started_on,v_start));
    select jsonb_build_object('amount',coalesce(sum(amount),0),'transactions',count(*),
-     'pasang',count(distinct point_id) filter(where amount>0),'kosong',count(distinct point_id) filter(where status='kosong')) into v_result
+     'pasang',count(distinct point_id) filter(where amount>0),'kosong',count(distinct point_id) filter(where status='kosong'),
+     'belum',greatest(0,(select count(*) from ronda.points where not deleted)-count(distinct point_id))) into v_result
      from (select point_id,amount,status from ronda.checkins where day between v_start and least(v_day,v_end)
        union all select point_id,amount,'pasang' from ronda.requests where status='approved' and day between v_start and least(v_day,v_end)
        union all select point_id,amount,status from ronda.legacy_records(v_start,least(v_day,v_end))) final_records;

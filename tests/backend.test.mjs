@@ -70,8 +70,19 @@ test('server authentication, authorization and operational integrity',async t=>{
    assert.equal((await call('biometric_login',{credential},'',true,other)).error,'SESSION');
    assert.equal((await call('biometric_login',{credential},'',true)).account.id,user.account.id);
   });
+  await t.test('PIN reset requests require admin approval and avoid duplicates',async()=>{
+   assert.equal((await call('pin_reset_request',{phone:'081234567890'},'',true)).status,'pending');
+   assert.equal((await call('pin_reset_request',{phone:'081234567890'},'',true)).error,'DUPLICATE');
+   const list=await call('pin_reset_list',{},admin.token,true);
+   const reset=list.requests.find(r=>r.phone==='6281234567890');
+   assert(reset);
+   assert.equal((await call('pin_reset_complete',{phone:'081234567890',pin:'111111'},'',true)).error,'INPUT');
+   assert.equal((await call('pin_reset_review',{id:reset.id,status:'approved'},admin.token,true)).ok,true);
+   assert.equal((await call('pin_reset_complete',{phone:'081234567890',pin:'111111'},'',true)).ok,true);
+   assert.equal((await call('login',{phone:'081234567890',pin:'111111'},'',true)).account.phone,'6281234567890');
+  });
   await t.test('admin can delete registered accounts without deleting history',async()=>{
-   user=await call('login',{phone:'081234567890',pin:'654321'},'',true);
+   user=await call('login',{phone:'081234567890',pin:'111111'},'',true);
    assert.equal((await call('account_delete',{id:admin.account.id},user.token,true)).error,'FORBIDDEN');
    assert.equal((await call('account_delete',{id:admin.account.id},admin.token,true)).error,'FORBIDDEN');
    assert.equal((await call('account_delete',{id:user.account.id},admin.token,true)).ok,true);

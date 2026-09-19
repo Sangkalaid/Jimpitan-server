@@ -4,9 +4,9 @@ html, body { min-height: 100%; overflow-x: hidden; }
 body { padding: 0; align-items: flex-start; }
 .app-screen { min-height: 100dvh !important; height: auto !important; max-height: none !important; max-width: 560px !important; }
 .app-screen > header { padding-top: max(16px, env(safe-area-inset-top)); }
-.dashboard-header { padding-bottom: 76px !important; }
+.dashboard-header { padding-top: calc(max(18px, env(safe-area-inset-top)) + 12px) !important; padding-bottom: 86px !important; }
 .dashboard-header button { max-width: 100%; }
-.dashboard-header #cloudStatusPill { max-width: 170px; white-space: nowrap; overflow: hidden; }
+.dashboard-header #cloudStatusPill { display: none !important; }
 .dashboard-header #cloudStatusText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-screen > header > div:first-child:has(.live-status-time) { display: none; }
 .sheet-modal { max-height: calc(100dvh - env(safe-area-inset-top) - 12px) !important; overflow-y: auto; overscroll-behavior: contain; padding-bottom: max(20px, var(--safe-bottom)) !important; max-width: 560px !important; }
@@ -19,6 +19,7 @@ p, h1, h2, h3, span { overflow-wrap: anywhere; }
 .flex > div { min-width: 0; }
 nav.fixed { padding-bottom: max(12px, var(--safe-bottom)); max-width: 560px !important; }
 #screenDashboard { padding-bottom: calc(100px + var(--safe-bottom)); }
+#screenDashboard main > section:first-child { margin-top: -64px !important; }
 #screenLogin main { justify-content: flex-start; }
 #loginAvatar { border-radius: 50%; }
 .ronda-list { display: grid; gap: 12px; margin: 16px 0; }
@@ -32,9 +33,52 @@ nav.fixed { padding-bottom: max(12px, var(--safe-bottom)); max-width: 560px !imp
 .ronda-field { display: block; width: 100%; border: 1px solid #cbd5e1; padding: 12px; margin: 6px 0 14px; border-radius: 8px; background: white; font-size: 14px; }
 .ronda-label { font-size: 12px; font-weight: 700; }
 .ronda-empty { text-align: center; padding: 28px 8px; color: #64748b; font-size: 13px; }
+.panel-subtitle { margin: 4px 0 12px; color: #64748b; font-size: 12px; font-weight: 700; }
+.point-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border-radius: 14px; margin: 8px 0; border: 1px solid rgba(148,163,184,.2); }
+.point-row strong { display: block; color: #0f172a; font-size: 13px; }
+.point-row p { color: #64748b; font-size: 11px; margin: 2px 0 0; }
+.soft-blue { background: #eff6ff; }
+.soft-green { background: #ecfdf5; }
+.soft-cream { background: #fffbeb; }
+.soft-slate { background: #f8fafc; }
+.status-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 24px; padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 900; white-space: nowrap; }
+.chip-green { background: #dcfce7; color: #166534; }
+.chip-blue { background: #dbeafe; color: #1d4ed8; }
+.chip-amber { background: #fef3c7; color: #92400e; }
+.chip-red { background: #ffe4e6; color: #be123c; }
 #routeMapModal .sheet-modal { height: calc(100dvh - env(safe-area-inset-top)); max-height: none !important; border-radius: 0; }
 #googleMap { flex: 1; min-height: 240px; width: 100%; }
 #mapStatus { padding: 8px 0; font-size: 12px; }
+.ronda-map-marker { background: transparent; border: 0; }
+.ronda-map-marker > div { width: 30px; height: 30px; border-radius: 999px; border: 3px solid white; box-shadow: 0 8px 18px rgba(15,23,42,.22); display: grid; place-items: center; position: relative; overflow: hidden; opacity: .82; }
+.ronda-map-marker img { width: 100%; height: 100%; object-fit: cover; }
+.ronda-map-marker i { width: 12px; height: 12px; border-radius: 999px; background: white; opacity: .9; }
+.ronda-map-marker.belum > div { background: #64748b; opacity: 1; transform: scale(1.08); }
+.ronda-map-marker.pasang > div { background: #2563eb; }
+.ronda-map-marker.kosong > div { background: #e11d48; }
+.ronda-map-marker.lunas > div { background: #16a34a; }
+.ronda-map-marker .sonar { display: none; position: absolute; inset: -8px; border-radius: 999px; border: 2px solid rgba(225,29,72,.72); animation: markerSonar 1.35s ease-out infinite; }
+.ronda-map-marker.belum .sonar { display: block; }
+@keyframes markerSonar { from { transform: scale(.55); opacity: .85; } to { transform: scale(1.65); opacity: 0; } }
+.marker-popup { min-width: 210px; }
+.marker-popup strong { font-size: 13px; color: #0f172a; }
+.marker-popup p { margin: 4px 0 8px; font-size: 11px; color: #64748b; }
+.leaflet-popup-content { margin: 12px; }
+.team-card { border: 1px solid rgba(148,163,184,.24); border-radius: 14px; padding: 12px; margin: 8px 0; }
+.team-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.team-card-head strong { font-size: 13px; color: #0f172a; }
+.team-card-head span { font-size: 10px; font-weight: 900; color: #64748b; background: rgba(255,255,255,.7); border-radius: 999px; padding: 3px 8px; }
+.team-member { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-top: 1px solid rgba(148,163,184,.16); font-size: 12px; font-weight: 800; color: #334155; }
+.marker-color-swatch { width: 30px; height: 30px; border-radius: 999px; border: 3px solid white; box-shadow: 0 0 0 1px #cbd5e1; }
+.marker-color-swatch.selected { box-shadow: 0 0 0 3px #0f4c81; }
+.map-legend { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0; font-size: 10px; font-weight: 800; color: #475569; }
+.map-legend span { display: inline-flex; align-items: center; gap: 4px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 999px; padding: 4px 7px; }
+.map-legend b { width: 9px; height: 9px; border-radius: 999px; display: inline-block; }
+.legend-belum { background: #64748b; box-shadow: 0 0 0 3px rgba(225,29,72,.18); }
+.legend-pasang { background: #2563eb; }
+.legend-kosong { background: #e11d48; }
+.legend-lunas { background: #16a34a; }
+.legend-active { background: #9333ea; }
 #globalToast { max-width: calc(100vw - 24px); top: max(16px, env(safe-area-inset-top)); z-index: 200; }
 [aria-label="Status Jimpitan"] > button { min-height: 112px; border-radius: 18px; padding: 10px !important; overflow: hidden; }
 [aria-label="Status Jimpitan"] > button > div:first-child { min-height: 22px; align-items: center; gap: 4px; }

@@ -171,7 +171,7 @@
               Nomor WhatsApp
             </label>
             <div class="relative flex items-center">
-              <input autocomplete="tel" class="w-full text-xs font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-3 focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none transition" id="input-whatsapp" inputmode="numeric" name="identifier" placeholder="Nomor WhatsApp" required="" type="text" value=""/>
+              <input autocomplete="username tel" aria-label="Nomor WhatsApp" class="w-full text-xs font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-3 focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none transition" id="input-whatsapp" inputmode="numeric" name="username" placeholder="Nomor WhatsApp" required="" type="tel" value=""/>
             </div>
           </div>
 
@@ -356,12 +356,12 @@
       <!-- 2. QUICK ACCESS ACTION SHORTCUTS -->
       <section aria-label="Menu Akses Cepat" class="relative">
         <div class="relative flex items-center">
-          <button class="quick-nav-button absolute -left-2 z-10 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 active:scale-95 transition-transform duration-150" onclick="document.getElementById('quickMenuSlider').scrollBy({left: -140, behavior: 'smooth'})" type="button">
+          <button class="quick-nav-button absolute -left-2 z-10 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 active:scale-95 transition-transform duration-150" onclick="moveQuickMenu(-1)" type="button">
             <span class="material-symbols-outlined text-base leading-none">chevron_left</span>
           </button>
           
           <!-- Carousel -->
-          <div class="flex gap-4 overflow-x-auto snap-x scroll-smooth px-8 py-1.5 w-full no-scrollbar" id="quickMenuSlider">
+          <div class="flex gap-4 overflow-x-auto snap-x scroll-smooth px-8 py-1.5 w-full no-scrollbar" id="quickMenuSlider" onscroll="updateQuickMenuIndicator()">
             <!-- Peta Rute -->
             <button class="flex flex-col items-center group flex-shrink-0 w-16 focus:outline-none" onclick="openRouteMapModal()" type="button">
               <div class="w-14 h-14 rounded-2xl bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 shadow-xs group-hover:bg-blue-200 active:scale-95 transition-transform duration-150">
@@ -412,13 +412,13 @@
             </button>
           </div>
 
-          <button class="quick-nav-button absolute -right-2 z-10 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 active:scale-95 transition-transform duration-150" onclick="document.getElementById('quickMenuSlider').scrollBy({left: 140, behavior: 'smooth'})" type="button">
+          <button class="quick-nav-button absolute -right-2 z-10 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 active:scale-95 transition-transform duration-150" onclick="moveQuickMenu(1)" type="button">
             <span class="material-symbols-outlined text-base leading-none">chevron_right</span>
           </button>
         </div>
         <div class="flex justify-center items-center gap-1.5 mt-2.5">
-          <div class="w-6 h-1.5 bg-brand-500 rounded-full"></div>
-          <div class="w-2 h-1.5 bg-slate-300 rounded-full"></div>
+          <div id="quickDot1" class="w-6 h-1.5 bg-brand-500 rounded-full transition-all"></div>
+          <div id="quickDot2" class="w-2 h-1.5 bg-slate-300 rounded-full transition-all"></div>
         </div>
       </section>
 
@@ -449,8 +449,8 @@
             </div>
           </div>
 
-          <!-- 2 Stat mini cards -->
-          <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100">
+          <!-- Pickup meta kept hidden; progress text above is the single source of status -->
+          <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 hidden" id="pickupMeta">
             <div class="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-2.5 flex items-center gap-2">
               <span class="material-symbols-outlined text-slate-500 text-lg">check_circle</span>
               <div>
@@ -468,7 +468,7 @@
           </div>
 
           <!-- Filter status switch -->
-          <div class="flex items-center justify-between mt-3.5 pt-2 bg-slate-50/90 rounded-2xl px-3 py-2 border border-slate-200/70">
+          <div class="hidden items-center justify-between mt-3.5 pt-2 bg-slate-50/90 rounded-2xl px-3 py-2 border border-slate-200/70">
             <span class="text-[10px] font-bold text-slate-600">Tampilkan Status:</span>
             <div class="flex items-center gap-1 bg-white p-0.5 rounded-xl border border-slate-200" role="group">
               <button class="px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-600 hover:text-slate-900 active:scale-95 transition-transform duration-150" id="btnTabPending" onclick="switchProgressState('pending')" type="button">Belum Selesai</button>
@@ -477,7 +477,7 @@
           </div>
 
           <!-- KIRIM LAPORAN BUTTON -->
-          <div class="mt-4 pt-1">
+          <div class="mt-4 pt-1 hidden" id="sendReportWrap">
             <button class="w-full min-h-[46px] py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 active:scale-95 text-white text-xs font-black rounded-2xl shadow-md flex items-center justify-center gap-2 transition-transform duration-150 focus:outline-none" onclick="openShareReportModal()" type="button">
               <span class="material-symbols-outlined text-base">send</span>
               <span class="tracking-wider uppercase">KIRIM LAPORAN</span>
@@ -505,7 +505,7 @@
           <div class="-mt-7 flex flex-col items-center">
             <button class="relative w-14 h-14 bg-gradient-to-tr from-sky-400 to-blue-700 rounded-full border-[3px] border-white shadow-xl flex items-center justify-center text-white active:scale-95 transition-transform duration-150 hover:scale-105 focus:outline-none" onclick="openJimpitanModal()" title="GPS Check-in Jimpitan" type="button">
               <i class="ph-bold ph-navigation-arrow text-2xl"></i>
-              
+              <span id="gpsDetectedBadge" class="hidden absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] font-black border-2 border-white flex items-center justify-center">0</span>
             </button>
           </div>
           <!-- Rekap -->
@@ -688,16 +688,43 @@
         <button class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center font-bold text-sm transition" onclick="closeLupaPinModal()" type="button">✕</button>
       </div>
 
-      <div class="space-y-3 my-2">
-        <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-xs leading-relaxed text-amber-900 font-semibold">
-          Demi keamanan, PIN tidak dapat ditampilkan. Hubungi pengurus RT untuk memverifikasi identitas dan membuat PIN baru.
-        </div>
-        <p class="text-[11px] text-slate-500 font-medium text-center">
-          Jangan pernah membagikan PIN melalui chat atau telepon.
-        </p>
-        <button class="w-full min-h-[44px] py-2.5 px-4 bg-gradient-to-r from-brand-600 to-[#2587d6] text-white text-xs font-bold rounded-xl shadow-md transition" onclick="applyRecoveredPin()" type="button">
-          Saya Mengerti
-        </button>
+      <div class="space-y-3 my-2" id="forgotPinStart">
+        <h3 class="text-lg font-black text-slate-900">Lupa PIN?</h3>
+        <p class="text-sm text-slate-600">Pilih metode pemulihan akun.</p>
+        <button class="ronda-button w-full" onclick="resetPinWithBiometric()" type="button"><span class="material-symbols-outlined">fingerprint</span>Gunakan Biometrik</button>
+        <button class="ronda-button ronda-secondary w-full" onclick="showForgotRequest()" type="button"><span class="material-symbols-outlined">approval_delegation</span>Ajukan Reset ke Pengurus</button>
+        <button class="ronda-button ronda-secondary w-full" onclick="closeLupaPinModal()" type="button">Batal</button>
+      </div>
+      <form class="space-y-3 my-2 hidden" id="forgotPinRequest" onsubmit="requestPinReset(event)">
+        <h3 class="text-lg font-black text-slate-900">Ajukan Reset PIN</h3>
+        <p class="text-xs text-slate-600">Masukkan nomor WhatsApp yang terdaftar. Permintaan reset PIN akan dikirim ke Pengurus RT melalui aplikasi.</p>
+        <label class="ronda-label" for="forgotPhone">Nomor WhatsApp</label>
+        <input autocomplete="username tel" class="ronda-field" id="forgotPhone" inputmode="numeric" required type="tel">
+        <div class="ronda-actions"><button class="ronda-button ronda-secondary" type="button" onclick="openLupaPinModal()">Batal</button><button class="ronda-button" type="submit">Kirim Permintaan</button></div>
+      </form>
+      <form class="space-y-3 my-2 hidden" id="forgotPinNew" onsubmit="saveNewPin(event)">
+        <h3 class="text-lg font-black text-slate-900">Buat PIN Baru</h3>
+        <input id="resetViaBiometric" type="hidden">
+        <label class="ronda-label" for="resetPhone">Nomor WhatsApp</label>
+        <input autocomplete="username tel" class="ronda-field" id="resetPhone" inputmode="numeric" required type="tel">
+        <label class="ronda-label" for="newPin">PIN Baru</label>
+        <input autocomplete="new-password" class="ronda-field" id="newPin" inputmode="numeric" maxlength="6" required type="password">
+        <label class="ronda-label" for="newPinConfirm">Konfirmasi PIN Baru</label>
+        <input autocomplete="new-password" class="ronda-field" id="newPinConfirm" inputmode="numeric" maxlength="6" required type="password">
+        <button class="ronda-button w-full" type="submit">Simpan PIN Baru</button>
+      </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-[3px] z-[130] hidden items-center justify-center p-6" id="exitAppModal">
+    <div class="bg-white w-full max-w-[330px] rounded-3xl p-5 shadow-2xl text-center">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-blue-100 text-brand-600 flex items-center justify-center mb-3"><span class="material-symbols-outlined text-3xl">logout</span></div>
+      <h2 class="text-lg font-black text-slate-900">Keluar dari aplikasi?</h2>
+      <p class="text-sm text-slate-600 mt-1">Apakah Anda yakin ingin keluar dari aplikasi?</p>
+      <div class="grid grid-cols-2 gap-2 mt-5">
+        <button class="ronda-button ronda-secondary" onclick="closeExitDialog()" type="button">Tidak</button>
+        <button class="ronda-button" onclick="confirmExitApp()" type="button">Ya</button>
       </div>
     </div>
   </div>
@@ -898,32 +925,6 @@
           <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shadow-xs mb-1.5 group-hover:scale-105 transition"><span class="material-symbols-outlined text-2xl">receipt_long</span></div>
           <span class="text-[10px] font-bold text-slate-700 text-center">Pengajuan</span>
         </button>
-        <button class="flex flex-col items-center group p-1 relative col-span-2 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-2.5 text-left active:scale-95 transition-transform duration-150" data-admin onclick="closeUtilitasModal(); openVerifAkunModal();" type="button">
-          <div class="flex items-center gap-2.5 w-full">
-            <div class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-xs flex-shrink-0 relative">
-              <span class="material-symbols-outlined text-2xl">how_to_reg</span>
-              <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white text-[9px] font-black rounded-full border border-white flex items-center justify-center hidden" id="utilitasMenuVerifBadge">0</span>
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-black text-slate-900 truncate">Verifikasi Akun</span>
-                <span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full" id="utilitasMenuVerifStatus">Selesai</span>
-              </div>
-              <p class="text-[10px] text-slate-500 font-medium truncate mt-0.5">Verifikasi warga &amp; petugas baru</p>
-            </div>
-          </div>
-        </button>
-        <button class="flex flex-col items-center group p-1 relative col-span-2 bg-slate-50 border border-slate-200 rounded-2xl p-2.5 text-left active:scale-95 transition-transform duration-150" onclick="closeUtilitasModal(); handleLogout();" type="button">
-          <div class="flex items-center gap-2.5 w-full">
-            <div class="w-11 h-11 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shadow-xs flex-shrink-0">
-              <span class="material-symbols-outlined text-2xl">logout</span>
-            </div>
-            <div class="min-w-0 flex-1">
-              <span class="text-xs font-black text-slate-900 truncate">Keluar / Ganti Akun</span>
-              <p class="text-[10px] text-slate-500 font-medium truncate mt-0.5">Kembali ke halaman masuk</p>
-            </div>
-          </div>
-        </button>
       </div>
     </div>
   </div>
@@ -1001,6 +1002,16 @@
       <h3 class="text-base font-extrabold text-slate-900 mt-2" id="profileModalName">Pengguna</h3>
       <p class="text-xs font-bold text-brand-600" id="profileModalRole">Ketua RT 01 • Pengurus Lingkungan</p>
       <p class="text-[11px] text-slate-500 mt-0.5">Dukuh Bener RT 01 / RW 02</p>
+      <div class="w-full mt-4">
+        <p class="text-[11px] font-black text-slate-700 mb-2">Warna Marker Saat Ronda</p>
+        <div class="flex items-center justify-center gap-2" id="markerColorChoices">
+          <button class="marker-color-swatch bg-blue-600" aria-label="Biru" onclick="setMarkerColor('#2563eb')" type="button"></button>
+          <button class="marker-color-swatch bg-orange-500" aria-label="Oranye" onclick="setMarkerColor('#f97316')" type="button"></button>
+          <button class="marker-color-swatch bg-purple-600" aria-label="Ungu" onclick="setMarkerColor('#9333ea')" type="button"></button>
+          <button class="marker-color-swatch bg-green-600" aria-label="Hijau" onclick="setMarkerColor('#16a34a')" type="button"></button>
+          <button class="marker-color-swatch bg-yellow-400" aria-label="Kuning" onclick="setMarkerColor('#eab308')" type="button"></button>
+        </div>
+      </div>
 
       <div class="w-full mt-5 pt-2 space-y-2">
         
@@ -1034,6 +1045,7 @@
           <span>Gang Mawar (RT 01)</span>
           <span class="font-bold text-emerald-700">Tarif Rp 500/hari</span>
         </div>
+        <p id="detectedPointHint" class="text-[10px] text-slate-500 font-bold mt-1">0 titik belum diambil</p>
 
         <div class="grid grid-cols-2 gap-2 mt-3.5">
           <button class="min-h-[44px] py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-1 active:scale-95 transition-transform duration-150" onclick="handleGpsRecordStatus('pasang')" type="button">
@@ -1050,7 +1062,7 @@
   </div>
 
   <!-- MODAL: PETA RUTE -->
-  <div id="routeMapModal" class="fixed inset-0 bg-slate-900/60 z-[90] hidden items-end justify-center"><div class="sheet-modal bg-white w-full p-4 flex flex-col"><div class="flex justify-between items-center"><h2 class="font-bold">Peta Jimpitan</h2><button aria-label="Tutup Peta" class="ronda-button ronda-secondary" onclick="closeRouteMapModal()"><span class="material-symbols-outlined">close</span></button></div><p id="mapStatus" role="status"></p><div id="googleMap"></div><div id="mapAdminTools" class="ronda-actions hidden"><button class="ronda-button" onclick="editPoint()"><span class="material-symbols-outlined">add_location_alt</span> Tambah Titik</button><button id="routeRecord" class="ronda-button" onclick="toggleRoute()">Rekam Rute</button><button class="ronda-button ronda-secondary" onclick="showRoutes()">Riwayat Rute</button></div></div></div>
+  <div id="routeMapModal" class="fixed inset-0 bg-slate-900/60 z-[90] hidden items-end justify-center"><div class="sheet-modal bg-white w-full p-4 flex flex-col"><div class="flex justify-between items-center"><h2 class="font-bold">Peta Jimpitan</h2><button aria-label="Tutup Peta" class="ronda-button ronda-secondary" onclick="closeRouteMapModal()"><span class="material-symbols-outlined">close</span></button></div><p id="mapStatus" role="status"></p><div id="googleMap"></div><div class="map-legend"><span><b class="legend-belum"></b>Belum Diambil</span><span><b class="legend-pasang"></b>Pasang</span><span><b class="legend-kosong"></b>Tidak Pasang</span><span><b class="legend-lunas"></b>Lunas</span><span><b class="legend-active"></b>Sedang Mengambil</span></div><div id="mapAdminTools" class="ronda-actions hidden"><button class="ronda-button" onclick="editPoint()"><span class="material-symbols-outlined">add_location_alt</span> Tambah Titik</button><button id="routeRecord" class="ronda-button" onclick="toggleRoute()">Rekam Rute</button><button class="ronda-button ronda-secondary" onclick="showRoutes()">Riwayat Rute</button></div></div></div>
 
   <div id="operationalPanel" class="fixed inset-0 bg-slate-900/60 z-[110] hidden items-end justify-center" onclick="handleBackdropClick(event,'operationalPanel')"><div class="sheet-modal bg-white w-full p-5 rounded-t-2xl" onclick="event.stopPropagation()"><div class="flex justify-between items-center gap-3"><h2 id="operationalTitle" class="font-bold"></h2><button class="ronda-button ronda-secondary" aria-label="Tutup" onclick="closeModalById('operationalPanel')"><span class="material-symbols-outlined">close</span></button></div><div id="operationalBody"></div></div></div>
 

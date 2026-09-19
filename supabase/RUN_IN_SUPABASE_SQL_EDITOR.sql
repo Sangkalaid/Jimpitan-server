@@ -1,5 +1,5 @@
 -- Combined production migration for Supabase SQL Editor
--- Generated from 202609170001_foundation.sql and 202609170002_operations.sql on 2026-09-18.
+-- Generated from 202609170001_foundation.sql and 202609170002_operations.sql on 2026-09-19.
 
 -- === supabase/migrations/202609170001_foundation.sql ===
 
@@ -41,6 +41,19 @@ create table ronda.audit (
   action text not null,
   created_at timestamptz not null default now()
 );
+create table ronda.pin_reset_requests (
+  id uuid primary key default gen_random_uuid(),
+  account_id uuid not null references ronda.accounts(id),
+  phone text not null,
+  status text not null default 'pending' check(status in ('pending','approved','rejected','completed')),
+  reset_token_hash text,
+  reviewed_by uuid references ronda.accounts(id),
+  reviewed_at timestamptz,
+  expires_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create unique index pin_reset_one_pending on ronda.pin_reset_requests(account_id) where status='pending';
+create index on ronda.pin_reset_requests(phone,created_at);
 
 -- Old registrations remain archived; no plaintext PIN is copied into the new system.
 insert into ronda.accounts(phone,name,pin_hash,role,status)
@@ -55,7 +68,7 @@ $$;
 create function public.ronda_auth(p_action text, p_data jsonb default '{}', p_token text default '')
 returns jsonb language plpgsql security definer set search_path = pg_catalog, ronda, extensions as $$
 declare
- a ronda.accounts; s ronda.sessions; v_phone text; v_device text; v_token text;
+ a ronda.accounts; s ronda.sessions; v_phone text; v_device text; v_token text; v_reset ronda.pin_reset_requests;
  v_target ronda.accounts;
 begin
  v_phone := regexp_replace(coalesce(p_data->>'phone',''),'[^0-9]','','g');
@@ -111,6 +124,28 @@ begin
    return jsonb_build_object('token',v_token,'account',ronda.profile(a));
  end if;
 
+ if p_action='pin_reset_request' then
+   select * into a from ronda.accounts where phone=v_phone and status='approved' and deleted_at is null;
+   if a.id is null then return jsonb_build_object('error','UNREGISTERED'); end if;
+   if exists(select 1 from ronda.pin_reset_requests where account_id=a.id and status='pending') then
+     return jsonb_build_object('error','DUPLICATE');
+   end if;
+   if exists(select 1 from ronda.pin_reset_requests where account_id=a.id and created_at>now()-interval '3 minutes') then
+     return jsonb_build_object('error','LOCKED');
+   end if;
+   insert into ronda.pin_reset_requests(account_id,phone) values(a.id,a.phone);
+   return jsonb_build_object('status','pending');
+ elsif p_action='pin_reset_complete' then
+   select * into v_reset from ronda.pin_reset_requests
+     where phone=v_phone and status='approved' and expires_at>now() for update;
+   if v_reset.id is null or coalesce(p_data->>'pin','') !~ '^[0-9]{6}$' then return jsonb_build_object('error','INPUT'); end if;
+   update ronda.accounts set pin_hash=extensions.crypt(p_data->>'pin',extensions.gen_salt('bf',12)),failed_attempts=0,locked_until=null
+     where id=v_reset.account_id and status='approved' and deleted_at is null;
+   update ronda.pin_reset_requests set status='completed' where id=v_reset.id;
+   delete from ronda.sessions where account_id=v_reset.account_id;
+   return jsonb_build_object('ok',true);
+ end if;
+
  select * into s from ronda.sessions where token_hash=encode(extensions.digest(p_token,'sha256'),'hex')
    and expires_at>now() and device_hash=v_device;
  select * into a from ronda.accounts where id=s.account_id and status='approved' and device_hash=v_device
@@ -128,6 +163,14 @@ begin
    return jsonb_build_object('credential',v_token);
  elsif p_action='biometric_disable' then
    delete from ronda.biometric_keys where account_id=a.id;
+ elsif p_action='pin_change_biometric' then
+   if coalesce(p_data->>'credential','')='' or coalesce(p_data->>'pin','') !~ '^[0-9]{6}$' then return jsonb_build_object('error','INPUT'); end if;
+   if not exists(select 1 from ronda.biometric_keys b where b.account_id=a.id
+     and b.token_hash=encode(extensions.digest(p_data->>'credential','sha256'),'hex')
+     and b.device_hash=v_device and b.expires_at>now()) then return jsonb_build_object('error','SESSION'); end if;
+   update ronda.accounts set pin_hash=extensions.crypt(p_data->>'pin',extensions.gen_salt('bf',12)),failed_attempts=0,locked_until=null where id=a.id;
+   delete from ronda.sessions where account_id=a.id;
+   delete from ronda.biometric_keys where account_id=a.id;
  elsif p_action='avatar' then
    if length(coalesce(p_data->>'avatar',''))>300000 or
       coalesce(p_data->>'avatar','') !~ '^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$' then
@@ -139,6 +182,19 @@ begin
    if a.role='warga' then return jsonb_build_object('error','FORBIDDEN'); end if;
    return jsonb_build_object('accounts',coalesce((select jsonb_agg(ronda.profile(x) order by x.created_at desc)
      from ronda.accounts x where x.deleted_at is null),'[]'::jsonb));
+ elsif p_action='pin_reset_list' then
+   if a.role='warga' then return jsonb_build_object('error','FORBIDDEN'); end if;
+   return jsonb_build_object('requests',coalesce((select jsonb_agg(jsonb_build_object('id',r.id,'phone',r.phone,'status',r.status,'created_at',r.created_at,'name',x.name) order by r.created_at desc)
+     from ronda.pin_reset_requests r join ronda.accounts x on x.id=r.account_id where r.status in ('pending','approved')),'[]'::jsonb));
+ elsif p_action='pin_reset_review' then
+   if a.role='warga' then return jsonb_build_object('error','FORBIDDEN'); end if;
+   select * into v_reset from ronda.pin_reset_requests where id=(p_data->>'id')::uuid and status='pending' for update;
+   if v_reset.id is null or p_data->>'status' not in ('approved','rejected') then return jsonb_build_object('error','INPUT'); end if;
+   update ronda.pin_reset_requests set status=p_data->>'status',reviewed_by=a.id,reviewed_at=now(),
+     reset_token_hash=null,
+     expires_at=case when p_data->>'status'='approved' then now()+interval '30 minutes' else null end
+     where id=v_reset.id;
+   return jsonb_build_object('ok',true,'phone',v_reset.phone);
  elsif p_action in ('verify','role','account_delete') then
    if a.role='warga' or (p_action='role' and a.role<>'master') then
      return jsonb_build_object('error','FORBIDDEN');
@@ -182,6 +238,7 @@ alter table ronda.accounts enable row level security;
 alter table ronda.sessions enable row level security;
 alter table ronda.biometric_keys enable row level security;
 alter table ronda.audit enable row level security;
+alter table ronda.pin_reset_requests enable row level security;
 revoke all on all tables in schema ronda from public,anon,authenticated;
 revoke all on all functions in schema ronda from public,anon,authenticated;
 revoke all on function public.ronda_auth(text,jsonb,text) from public;
@@ -300,11 +357,18 @@ begin
 end $$;
 
 create function ronda.snapshot(p_day date) returns jsonb language sql stable set search_path=pg_catalog,ronda as $$
- select coalesce(jsonb_agg(to_jsonb(p) || jsonb_build_object('paid',p.occupied and
-   (exists(select 1 from ronda.checkins c where c.point_id=p.id and c.day=p_day and c.status='pasang') or
-    exists(select 1 from ronda.requests r where r.point_id=p.id and r.day=p_day and r.status='approved') or
-    exists(select 1 from ronda.legacy_records(p_day,p_day) l where l.point_id=p.id and l.amount>0)))
-   order by p.created_at),'[]'::jsonb) from ronda.points p where not p.deleted
+ with day_records as (
+   select point_id, amount, status from ronda.checkins where day=p_day
+   union all select point_id, amount, 'pasang' from ronda.requests where day=p_day and status='approved'
+   union all select point_id, amount, status from ronda.legacy_records(p_day,p_day)
+ ), per_point as (
+   select p.*,
+     exists(select 1 from day_records d where d.point_id=p.id) as checked_today,
+     coalesce((select case when sum(amount)>0 then 'pasang' when count(*)>0 then 'kosong' end from day_records d where d.point_id=p.id),'belum') as status_today,
+     exists(select 1 from day_records d where d.point_id=p.id and d.amount>0) as paid
+   from ronda.points p where not p.deleted
+ )
+ select coalesce(jsonb_agg(to_jsonb(per_point) order by created_at),'[]'::jsonb) from per_point
 $$;
 create function public.ronda_data(p_action text,p_data jsonb default '{}',p_token text default '')
 returns jsonb language plpgsql security definer set search_path=pg_catalog,ronda,extensions as $$
@@ -408,7 +472,8 @@ begin
      when 'bulan' then (v_start+interval '1 month'-interval '1 day')::date else v_day end;
    v_start:=greatest(v_start,coalesce(cfg.started_on,v_start));
    select jsonb_build_object('amount',coalesce(sum(amount),0),'transactions',count(*),
-     'pasang',count(distinct point_id) filter(where amount>0),'kosong',count(distinct point_id) filter(where status='kosong')) into v_result
+     'pasang',count(distinct point_id) filter(where amount>0),'kosong',count(distinct point_id) filter(where status='kosong'),
+     'belum',greatest(0,(select count(*) from ronda.points where not deleted)-count(distinct point_id))) into v_result
      from (select point_id,amount,status from ronda.checkins where day between v_start and least(v_day,v_end)
        union all select point_id,amount,'pasang' from ronda.requests where status='approved' and day between v_start and least(v_day,v_end)
        union all select point_id,amount,status from ronda.legacy_records(v_start,least(v_day,v_end))) final_records;

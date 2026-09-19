@@ -68,8 +68,17 @@ nav.fixed { padding-bottom: max(12px, var(--safe-bottom)); max-width: 560px !imp
 .marker-card-head { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 10px; }
 .marker-popup strong { display: block; font-size: 14px; line-height: 1.2; color: #0f172a; overflow-wrap: anywhere; }
 .marker-popup p { margin: 4px 0 0; font-size: 11px; color: #64748b; font-weight: 800; }
-.marker-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; margin-top: 12px; }
-.marker-actions .ronda-button { width: 100%; justify-content: center; min-height: 34px; padding-left: 8px; padding-right: 8px; white-space: normal; line-height: 1.1; }
+.checkin-action-stack { display: grid; grid-template-columns: 1fr; gap: 7px; margin-top: 10px; }
+.checkin-action-stack .ronda-button { width: 100%; justify-content: center; min-height: 38px; padding-left: 10px; padding-right: 10px; white-space: normal; line-height: 1.1; }
+.marker-stack { margin-top: 12px; }
+.detected-house-list { display: grid; gap: 10px; max-height: min(54dvh, 460px); overflow: auto; padding-right: 2px; }
+.detected-house-card { background: white; border: 1px solid #e2e8f0; border-radius: 18px; padding: 12px; box-shadow: 0 8px 24px rgba(15,23,42,.06); }
+.detected-house-head { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: start; }
+.detected-house-head strong { display: block; font-size: 13px; line-height: 1.2; color: #0f172a; overflow-wrap: anywhere; }
+.detected-house-head p { margin-top: 3px; font-size: 10px; font-weight: 800; color: #64748b; }
+.map-admin-tools { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding-top: 10px; }
+.map-admin-tools.hidden { display: none; }
+.map-admin-tools .ronda-button { width: 100%; min-height: 42px; justify-content: center; }
 .team-card { border: 1px solid rgba(148,163,184,.24); border-radius: 14px; padding: 12px; margin: 8px 0; }
 .team-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
 .team-card-head strong { font-size: 13px; color: #0f172a; }

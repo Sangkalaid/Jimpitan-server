@@ -56,6 +56,10 @@ test('server authentication, authorization and operational integrity',async t=>{
    assert.equal((await call('checkin',data,admin.token)).error,'DUPLICATE');
    const dash=await call('dashboard',{day},admin.token); assert.equal(dash.points[0].paid,true); assert.equal(dash.points[0].occupied,true); assert.equal(dash.total,500);
    const report=await call('report',{day,period:'hari'},admin.token); assert.equal(report.amount,500); assert.equal(report.transactions,1);
+   assert.equal((await call('checkin_cancel',{point_id:point.id,day},user.token)).error,'FORBIDDEN');
+   assert.equal((await call('checkin_cancel',{point_id:point.id,day},admin.token)).ok,true);
+   const cancelled=await call('dashboard',{day},admin.token); assert.equal(cancelled.points[0].status_today,'belum'); assert.equal(cancelled.total,0);
+   assert.equal((await call('checkin',data,admin.token)).ok,true);
   });
   await t.test('complaints are private, responses persist',async()=>{
    await call('complaint_create',{body:'Test complaint'},user.token);

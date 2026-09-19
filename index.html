@@ -1037,32 +1037,18 @@
       </div>
 
       <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 my-3">
-        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pilih Titik Rumah Patroli</label>
-        <select class="w-full text-xs font-bold text-slate-900 bg-white border border-slate-300 rounded-xl px-2.5 py-2 mb-2 focus:ring-2 focus:ring-emerald-600" id="selectGpsHouse" onchange="onSelectGpsHouseChange()">
-          <!-- Populated by JS -->
-        </select>
-        <div class="text-[10px] text-slate-500 flex items-center justify-between" id="gpsSelectedHouseMeta">
-          <span>Gang Mawar (RT 01)</span>
+        <div class="text-[10px] text-slate-500 flex items-center justify-between gap-2">
+          <span class="font-black uppercase">Rumah Terdeteksi</span>
           <span class="font-bold text-emerald-700">Tarif Rp 500/hari</span>
         </div>
         <p id="detectedPointHint" class="text-[10px] text-slate-500 font-bold mt-1">0 titik belum diambil</p>
-
-        <div class="grid grid-cols-2 gap-2 mt-3.5">
-          <button class="min-h-[44px] py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-1 active:scale-95 transition-transform duration-150" onclick="handleGpsRecordStatus('pasang')" type="button">
-            <span class="material-symbols-outlined text-base">check</span>
-            <span>Pasang (Rp 500)</span>
-          </button>
-          <button class="min-h-[44px] py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black flex items-center justify-center gap-1 active:scale-95 transition-transform duration-150" onclick="handleGpsRecordStatus('kosong')" type="button">
-            <span class="material-symbols-outlined text-base">close</span>
-            <span>Kosong</span>
-          </button>
-        </div>
+        <div id="detectedHouseList" class="detected-house-list mt-3"></div>
       </div>
     </div>
   </div>
 
   <!-- MODAL: PETA RUTE -->
-  <div id="routeMapModal" class="fixed inset-0 bg-slate-900/60 z-[90] hidden items-end justify-center"><div class="sheet-modal bg-white w-full p-4 flex flex-col"><div class="flex justify-between items-center"><h2 class="font-bold">Peta Jimpitan</h2><button aria-label="Tutup Peta" class="ronda-button ronda-secondary" onclick="closeRouteMapModal()"><span class="material-symbols-outlined">close</span></button></div><p id="mapStatus" role="status"></p><div id="googleMap"></div><div class="map-legend"><span><b class="legend-belum"></b>Belum Diambil</span><span><b class="legend-pasang"></b>Pasang</span><span><b class="legend-kosong"></b>Tidak Pasang</span><span><b class="legend-lunas"></b>Lunas</span><span><b class="legend-active"></b>Sedang Mengambil</span></div><div id="mapAdminTools" class="ronda-actions hidden"><button class="ronda-button" onclick="editPoint()"><span class="material-symbols-outlined">add_location_alt</span> Tambah Titik</button><button id="routeRecord" class="ronda-button" onclick="toggleRoute()">Rekam Rute</button><button class="ronda-button ronda-secondary" onclick="showRoutes()">Riwayat Rute</button></div></div></div>
+  <div id="routeMapModal" class="fixed inset-0 bg-slate-900/60 z-[90] hidden items-end justify-center"><div class="sheet-modal bg-white w-full p-4 flex flex-col"><div class="flex justify-between items-center"><h2 class="font-bold">Peta Jimpitan</h2><button aria-label="Tutup Peta" class="ronda-button ronda-secondary" onclick="closeRouteMapModal()"><span class="material-symbols-outlined">close</span></button></div><p id="mapStatus" role="status"></p><div id="googleMap"></div><div class="map-legend"><span><b class="legend-belum"></b>Belum Diambil</span><span><b class="legend-pasang"></b>Pasang</span><span><b class="legend-kosong"></b>Tidak Pasang</span><span><b class="legend-lunas"></b>Lunas</span><span><b class="legend-active"></b>Sedang Mengambil</span></div><div id="mapAdminTools" class="map-admin-tools hidden"><button class="ronda-button" onclick="editPoint()"><span class="material-symbols-outlined">add_location_alt</span> Tambah Titik</button><button id="routeRecord" class="ronda-button" onclick="toggleRoute()">Rekam Rute</button></div></div></div>
 
   <div id="operationalPanel" class="fixed inset-0 bg-slate-900/60 z-[110] hidden items-end justify-center" onclick="handleBackdropClick(event,'operationalPanel')"><div class="sheet-modal bg-white w-full p-5 rounded-t-2xl" onclick="event.stopPropagation()"><div class="flex justify-between items-center gap-3"><h2 id="operationalTitle" class="font-bold"></h2><button class="ronda-button ronda-secondary" aria-label="Tutup" onclick="closeModalById('operationalPanel')"><span class="material-symbols-outlined">close</span></button></div><div id="operationalBody"></div></div></div>
 

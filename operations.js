@@ -63,9 +63,9 @@ function renderDashboard() {
   renderSelectOptions(); renderMapMarkers();
 }
 function renderSelectOptions() {
-  for(const id of ['selectTargetRumah','selectGpsHouse']) {
+  for(const id of ['selectTargetRumah']) {
     const select=$(id); const previous=select.value;
-    select.innerHTML='<option value="">Pilih titik jimpitan</option>'+houseData.filter(h=>id==='selectGpsHouse'||h.occupied).map(h=>`<option value="${h.id}">${escapeHtml(displayPointName(h))}</option>`).join('');
+    select.innerHTML='<option value="">Pilih titik jimpitan</option>'+houseData.filter(h=>h.occupied).map(h=>`<option value="${h.id}">${escapeHtml(displayPointName(h))}</option>`).join('');
     if(houseData.some(h=>h.id===previous)) select.value=previous;
   }
 }
@@ -114,11 +114,21 @@ function displayPointName(point) {
 function openPanel(title,body,subtitle='') {
   $('operationalTitle').textContent=title; $('operationalBody').innerHTML=(subtitle?`<p class="panel-subtitle">${escapeHtml(subtitle)}</p>`:'')+body; openModalById('operationalPanel');
 }
-function openJimpitanModal() { renderSelectOptions(); onSelectGpsHouseChange(); $('detectedPointHint').textContent=`${getDashboardStats().belum} titik belum diambil`; openModalById('jimpitanModal'); }
+function openJimpitanModal() { renderSelectOptions(); renderDetectedHouseList(); $('detectedPointHint').textContent=`${getDashboardStats().belum} titik belum diambil`; openModalById('jimpitanModal'); }
 function closeJimpitanModal() { closeModalById('jimpitanModal'); }
-function onSelectGpsHouseChange() {
-  const p=houseData.find(h=>h.id===$('selectGpsHouse').value);
-  $('gpsSelectedHouseMeta').textContent=p?`${displayPointName(p)} / ${p.occupied?'Pasang':'Kosong'}`:'Pilih titik yang sedang dikunjungi.';
+function isCheckedToday(point) { return !!(point?.checked_today || point?.status_today==='pasang' || point?.status_today==='kosong' || point?.paid); }
+function renderDetectedHouseList() {
+  const list=$('detectedHouseList'); if(!list) return;
+  const points=houseData.filter(h=>h.latitude!==null && h.longitude!==null);
+  list.innerHTML=points.map(p=>{
+    const status=pointStatus(p), checked=isCheckedToday(p);
+    const label={lunas:'Lunas',pasang:'Pasang',kosong:'Tidak Pasang',belum:'Belum Dicatat'}[status];
+    return `<article class="detected-house-card"><div class="detected-house-head"><div><strong>${escapeHtml(displayPointName(p))}</strong><p>Dukuh Bener RT 01 / RW 02</p></div><span class="status-chip chip-${status==='kosong'?'red':status==='belum'?'amber':status==='lunas'?'green':'blue'}">${label}</span></div><div class="checkin-action-stack">${checkinButtons(p,checked)}</div></article>`;
+  }).join('') || '<p class="ronda-empty">Belum ada rumah dengan lokasi peta.</p>';
+}
+function checkinButtons(point,checked=isCheckedToday(point)) {
+  const cancel=checked && !point.paid ? `<button class="ronda-button ronda-secondary compact" onclick="handleGpsRecordStatus('${point.id}','cancel')" type="button"><span class="material-symbols-outlined">undo</span> Batalkan</button>` : '';
+  return `<button class="ronda-button compact" onclick="handleGpsRecordStatus('${point.id}','pasang')" type="button"><span class="material-symbols-outlined">check</span> Pasang</button><button class="ronda-button ronda-danger compact" onclick="handleGpsRecordStatus('${point.id}','kosong')" type="button"><span class="material-symbols-outlined">close</span> Tidak Pasang</button>${cancel}`;
 }
 function getLocation() {
   return new Promise((resolve,reject)=>{
@@ -130,17 +140,21 @@ function getLocation() {
     {enableHighAccuracy:true,timeout:20000,maximumAge:0});
   });
 }
-async function handleGpsRecordStatus(status) {
+async function handleGpsRecordStatus(pointId,status) {
   const buttons=[...$('jimpitanModal').querySelectorAll('button')];
   if(buttons.some(b=>b.disabled)) return;
   buttons.forEach(b=>b.disabled=true);
   try {
-    const point_id=$('selectGpsHouse').value;
-    if(!point_id) throw new Error('Pilih titik jimpitan terlebih dahulu.');
+    if(!pointId) throw new Error('Pilih titik jimpitan terlebih dahulu.');
+    if(status==='cancel') {
+      await api('checkin_cancel',{point_id:pointId,day:localDay()});
+      await fetchSupabaseData(); renderDetectedHouseList(); showToast('Pencatatan dibatalkan.');
+      return;
+    }
     $('gpsStatusAccuracy').textContent='Mencari lokasi perangkat...';
     const location=await getLocation(); $('gpsStatusAccuracy').textContent=`Akurasi ${Math.round(location.accuracy)} m`;
-    await api('checkin',{point_id,status,day:localDay(),...location});
-    await fetchSupabaseData(); closeJimpitanModal(); showToast('Jimpitan tersimpan.');
+    await api('checkin',{point_id:pointId,status,day:localDay(),...location});
+    await fetchSupabaseData(); renderDetectedHouseList(); showToast('Jimpitan tersimpan.');
   } catch(e) { showToast(e.message,false); }
   finally { buttons.forEach(b=>b.disabled=false); }
 }
@@ -274,9 +288,8 @@ function pointIcon(p) {
 function markerPopup(p) {
   const status=pointStatus(p), label={lunas:'Lunas',pasang:'Pasang',kosong:'Tidak Pasang',belum:'Belum Diambil'}[status];
   const chip=status==='kosong'?'red':status==='belum'?'amber':status==='lunas'?'green':'blue';
-  return `<div class="marker-popup marker-card"><div class="marker-card-head"><div><strong>${escapeHtml(displayPointName(p))}</strong><p>Dukuh Bener RT 01 / RW 02</p></div><span class="status-chip chip-${chip}">${label}</span></div><div class="marker-actions">${isAdmin()?`<button class="ronda-button compact ronda-secondary" onclick="editPoint('${p.id}')">Edit</button>`:''}<button class="ronda-button compact ronda-secondary" onclick="showToast('Scan barcode dibuka dari marker peta.')">Scan Barcode</button><button class="ronda-button compact" onclick="prepareMapCheckin('${p.id}','pasang')">Pasang</button><button class="ronda-button compact ronda-danger" onclick="prepareMapCheckin('${p.id}','kosong')">Tidak Pasang</button></div></div>`;
+  return `<div class="marker-popup marker-card"><div class="marker-card-head"><div><strong>${escapeHtml(displayPointName(p))}</strong><p>Dukuh Bener RT 01 / RW 02</p></div><span class="status-chip chip-${chip}">${label}</span></div><div class="checkin-action-stack marker-stack">${isAdmin()?`<button class="ronda-button compact ronda-secondary" onclick="editPoint('${p.id}')">Edit</button>`:''}<button class="ronda-button compact ronda-secondary" onclick="showToast('Scan barcode dibuka dari marker peta.')">Scan Barcode</button>${checkinButtons(p)}</div></div>`;
 }
-function prepareMapCheckin(id,status) { closeRouteMapModal(); openJimpitanModal(); $('selectGpsHouse').value=id; onSelectGpsHouseChange(); if(status) showToast(status==='pasang'?'Pilih Pasang untuk menyimpan.':'Pilih Kosong untuk menyimpan.'); }
 async function editPoint(id=null) {
   if(!isAdmin()) return showToast('Fitur peta ini hanya untuk Pengurus RT.',false);
   await runAction(null,async()=>{

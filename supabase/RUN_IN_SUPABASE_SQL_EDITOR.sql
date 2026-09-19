@@ -1,8 +1,3 @@
--- Combined production migration for Supabase SQL Editor
--- Generated from 202609170001_foundation.sql and 202609170002_operations.sql on 2026-09-19.
-
--- === supabase/migrations/202609170001_foundation.sql ===
-
 begin;
 create schema if not exists extensions;
 create extension if not exists pgcrypto with schema extensions;
@@ -252,10 +247,6 @@ do $$ begin
  end if;
 end $$;
 commit;
-
-
--- === supabase/migrations/202609170002_operations.sql ===
-
 begin;
 create table ronda.points (
  id uuid primary key default gen_random_uuid(), legacy_id text unique, name text not null,
@@ -430,6 +421,18 @@ begin
    if v_id is null then return jsonb_build_object('error','DUPLICATE'); end if;
    update ronda.points set occupied=p_data->>'status'='pasang',updated_at=now() where id=p.id;
    update ronda.settings set started_on=least(coalesce(started_on,v_day),v_day) where singleton;
+ elsif p_action='checkin_cancel' then
+   if abs(v_day-(now() at time zone 'Asia/Jakarta')::date)>1 then return jsonb_build_object('error','INPUT'); end if;
+   if not v_admin and not exists(select 1 from ronda.teams where account_id=a.id and weekday=extract(isodow from v_day)) then
+     return jsonb_build_object('error','FORBIDDEN');
+   end if;
+   select * into p from ronda.points where id=(p_data->>'point_id')::uuid and not deleted for update;
+   if p.id is null then return jsonb_build_object('error','MAP_POINT'); end if;
+   delete from ronda.checkins where point_id=p.id and day=v_day returning id into v_id;
+   if v_id is null then return jsonb_build_object('error','INPUT'); end if;
+   update ronda.points set occupied=false,updated_at=now() where id=p.id and not exists(
+     select 1 from ronda.checkins c where c.point_id=p.id and c.status='pasang'
+   );
  elsif p_action='teams' then
    return jsonb_build_object('teams',coalesce((select jsonb_agg(jsonb_build_object('id',ac.id,'name',ac.name,'weekday',t.weekday) order by t.weekday,ac.name)
      from ronda.teams t join ronda.accounts ac on ac.id=t.account_id where ac.status='approved' and
@@ -524,4 +527,3 @@ revoke all on all functions in schema ronda from public,anon,authenticated;
 revoke all on function public.ronda_data(text,jsonb,text) from public;
 grant execute on function public.ronda_data(text,jsonb,text) to anon,authenticated;
 commit;
-
